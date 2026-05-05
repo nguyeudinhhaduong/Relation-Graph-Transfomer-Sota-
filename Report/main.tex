@@ -1,0 +1,736 @@
+\documentclass[aspectratio=169,11pt]{beamer}
+
+\usepackage[T5]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[vietnamese]{babel}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{tabularx}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,shapes.geometric,calc}
+
+\definecolor{mainblue}{HTML}{0A3D62}
+\definecolor{darkblue}{HTML}{073B5A}
+\definecolor{lightblue}{HTML}{EAF2F8}
+\definecolor{accentgreen}{HTML}{1E8449}
+\definecolor{accentred}{HTML}{B03A2E}
+\definecolor{softgray}{HTML}{5D6D7E}
+
+\usetheme{Madrid}
+\usecolortheme{default}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}[frame number]
+\setbeamercolor{title}{fg=white,bg=darkblue}
+\setbeamercolor{frametitle}{fg=mainblue}
+\setbeamercolor{structure}{fg=mainblue}
+\setbeamercolor{block title}{fg=white,bg=mainblue}
+\setbeamercolor{block body}{fg=black,bg=lightblue}
+\setbeamercolor{block title alerted}{fg=white,bg=accentred}
+\setbeamercolor{block body alerted}{fg=black,bg=red!5}
+\setbeamercolor{block title example}{fg=white,bg=accentgreen}
+\setbeamercolor{block body example}{fg=black,bg=green!5}
+\setbeamertemplate{itemize item}{\color{mainblue}$\blacktriangleright$}
+
+\newcommand{\SectionDivider}[2]{
+\begin{frame}[plain]
+  \begin{tikzpicture}[remember picture,overlay]
+    \fill[darkblue] (current page.south west) rectangle (current page.north east);
+  \end{tikzpicture}
+  \vspace{0.9cm}
+  \begin{center}
+    {\color{white}\Huge\bfseries #1}\\[0.45cm]
+    {\color{white}\Large #2}\\[0.7cm]
+    {\color{white}\small Báo cáo kỹ thuật RelGT}
+  \end{center}
+\end{frame}
+}
+
+\title[RELGT \texorpdfstring{$\rightarrow$}{->} RELGT++ \texorpdfstring{$\rightarrow$}{->} RELGT-X]{Báo cáo RELGT/RelGT++/RelGT-X}
+\subtitle{Bản 38 slide: phân tích RelGT++ trước, sau đó so sánh với RelGT}
+\author{Tổng hợp từ \texttt{relgt\_report\_vi.tex}, \texttt{relgtpp\_analysis.tex}, \texttt{relgtx\_proposal.tex}}
+\institute{Relational Graph Transformer}
+\date{Tháng 04/2026}
+
+\begin{document}
+
+% ========================= 1 =========================
+\begin{frame}[plain]
+  \begin{tikzpicture}[remember picture,overlay]
+    \fill[darkblue] (current page.south west) rectangle (current page.north east);
+  \end{tikzpicture}
+  \vspace{0.8cm}
+  \begin{center}
+    {\color{white}\LARGE\bfseries RELGT \texorpdfstring{$\rightarrow$}{->} RELGT++ \texorpdfstring{$\rightarrow$}{->} RELGT-X}\\[0.35cm]
+    {\color{white}\large Báo cáo kỹ thuật 38 slide}\\[0.65cm]
+    {\color{white}\normalsize Luồng trình bày: RELGT nền tảng $\rightarrow$ phân tích RelGT++}\\
+    {\color{white}\normalsize $\rightarrow$ so sánh RelGT++ với RelGT $\rightarrow$ đề xuất RelGT-X}\\[0.8cm]
+    {\color{white}\small \texttt{main.tex}}
+  \end{center}
+\end{frame}
+
+% ========================= 2 =========================
+\begin{frame}{MỤC-LỤC-00: Bản đồ nội dung}
+  \tableofcontents
+\end{frame}
+
+\section{RELGT nền tảng}
+
+% ========================= 3 =========================
+\SectionDivider{PHẦN I}{RELGT: Nền tảng và kết quả gốc}
+
+% ========================= 4 =========================
+\begin{frame}{RELGT-01: Bối cảnh Relational Deep Learning}
+  \begin{block}{Bài toán thực tế}
+    Trong hầu hết hệ thống doanh nghiệp (TMĐT, tài chính, y tế, viễn thông), dữ liệu không nằm trong một bảng duy nhất mà phân tán theo nhiều bảng quan hệ, nhiều loại thực thể và nhiều mốc thời gian.
+  \end{block}
+  \begin{itemize}
+    \item Mỗi bảng có schema, miền giá trị và vai trò nghiệp vụ khác nhau.
+    \item Quan hệ không ngẫu nhiên mà bị ràng buộc bởi khóa chính/khóa ngoại.
+    \item Nhiều tác vụ dự báo cần tuân thủ trục thời gian để tránh rò rỉ dữ liệu tương lai.
+  \end{itemize}
+  \begin{exampleblock}{Hàm ý mô hình hóa}
+    Mô hình tốt phải hiểu được đồng thời: \textbf{ngữ nghĩa bảng}, \textbf{liên kết quan hệ}, và \textbf{động lực thời gian} trong cùng một không gian biểu diễn.
+  \end{exampleblock}
+\end{frame}
+
+% ========================= 5 =========================
+\begin{frame}{RELGT-02: Định nghĩa REG}
+  \[
+    \mathcal{G}=(\mathcal{V},\mathcal{E},\varphi,\psi,\tau)
+  \]
+  \begin{itemize}
+    \item $\varphi$: ánh xạ node về loại bảng (kiểu thực thể).
+    \item $\psi$: ánh xạ cạnh về loại quan hệ theo schema.
+    \item $\tau$: dấu thời gian của node/sự kiện.
+  \end{itemize}
+  \begin{exampleblock}{Đặc trưng chính}
+    Schema-defined, temporal, heterogeneous.
+  \end{exampleblock}
+  \begin{block}{Ý nghĩa phân tích}
+    REG biến dữ liệu quan hệ thành đồ thị có cấu trúc nghiêm ngặt. Nhờ đó, mô hình không chỉ học “ai nối với ai” mà còn học “nối theo kiểu gì” và “xảy ra khi nào”.
+  \end{block}
+\end{frame}
+
+% ========================= 6 =========================
+\begin{frame}{RELGT-03: Hạn chế của GNN truyền thống}
+  \begin{columns}[T]
+    \column{0.49\textwidth}
+    \begin{block}{Biểu đạt}
+      \begin{itemize}
+        \item Trường nhìn theo số hop
+        \item Over-squashing
+        \item Tương tác xa khó truyền
+      \end{itemize}
+    \end{block}
+    \column{0.49\textwidth}
+    \begin{alertblock}{Hệ thống}
+      \begin{itemize}
+        \item Khó mở rộng theo schema lớn
+        \item Chưa mạnh ở temporal-causal
+        \item Thiếu cơ chế toàn cục
+      \end{itemize}
+    \end{alertblock}
+  \end{columns}
+  \begin{block}{Diễn giải trực quan}
+    Trong bài toán quan hệ nhiều bảng, tín hiệu quan trọng thường nằm xa seed node. Khi chỉ truyền theo cạnh cục bộ, tín hiệu này bị suy giảm hoặc “nén quá mức”, làm mô hình bỏ lỡ phụ thuộc xa có giá trị.
+  \end{block}
+\end{frame}
+
+% ========================= 7 =========================
+\begin{frame}{RELGT-04: Ba đóng góp trọng tâm}
+  \begin{enumerate}
+    \item \textbf{Token hóa 5 thành phần} để biểu diễn mỗi node theo nhiều chiều thông tin thay vì một vector gộp đơn giản.
+    \item \textbf{Transformer 2 nhánh} kết hợp nhận thức cục bộ (local) và tri thức xa (global centroid).
+    \item \textbf{Hiệu năng mạnh trên RelBench} cho thấy thiết kế này có giá trị thực nghiệm, không chỉ mang tính ý tưởng.
+  \end{enumerate}
+  \begin{block}{Ý tưởng cốt lõi}
+    Dùng attention để tăng biểu đạt xa nhưng vẫn giữ pipeline huấn luyện có thể mở rộng.
+  \end{block}
+\begin{exampleblock}{Điểm quan trọng}
+  RELGT không phủ nhận GNN, mà kế thừa ưu điểm lấy mẫu theo neighborhood rồi nâng cấp năng lực biểu đạt bằng tokenization + transformer.
+\end{exampleblock}
+\end{frame}
+
+% ========================= 8 =========================
+\begin{frame}{RELGT-05: Pipeline tổng thể}
+  \begin{center}
+  \begin{tikzpicture}[
+    node distance=0.9cm and 0.7cm,
+    box/.style={rectangle,rounded corners=5pt,draw=mainblue,fill=lightblue,minimum width=2.8cm,minimum height=0.95cm,align=center},
+    arr/.style={-Stealth,thick,mainblue}
+  ]
+    \node[box] (a) {Input REG};
+    \node[box, right=of a] (b) {Temporal\\sampling};
+    \node[box, right=of b] (c) {Token hóa\\5-tuple};
+    \node[box, right=of c] (d) {Local + Global\\Transformer};
+    \node[box, right=of d] (e) {Prediction};
+    \draw[arr] (a) -- (b);
+    \draw[arr] (b) -- (c);
+    \draw[arr] (c) -- (d);
+    \draw[arr] (d) -- (e);
+  \end{tikzpicture}
+  \end{center}
+\begin{itemize}
+  \item Luồng xử lý tách bạch giúp dễ kiểm thử: lỗi ở sampling, token hóa hay attention đều có thể truy vết.
+  \item Cấu trúc pipeline này cũng thuận tiện cho precompute và huấn luyện phân tán.
+\end{itemize}
+\end{frame}
+
+% ========================= 9 =========================
+\begin{frame}{RELGT-06: Temporal 2-hop sampling}
+  \[
+    \mathcal{N}(v_i)=\{v_j:\ d(v_i,v_j)\le2,\ \tau(v_j)\le\tau(v_i)\}
+  \]
+  \begin{itemize}
+    \item Giữ tính nhân quả bằng ràng buộc thời gian.
+    \item Nếu thiếu neighbor thì sample có lặp hoặc fallback global.
+  \end{itemize}
+\begin{block}{Vì sao bước này quan trọng?}
+  Nếu không kiểm soát thời gian ở giai đoạn lấy mẫu, mô hình có thể “nhìn thấy tương lai” và đạt điểm đánh giá ảo. RELGT xử lý vấn đề này ngay từ đầu pipeline.
+\end{block}
+\begin{exampleblock}{Hệ quả thực tế}
+  Mặc dù có thể làm khó huấn luyện hơn (ít neighbor hợp lệ hơn), kết quả thu được đáng tin cậy hơn khi triển khai thật.
+\end{exampleblock}
+\end{frame}
+
+% ========================= 10 =========================
+\begin{frame}{RELGT-07: Token hóa 5 thành phần}
+  \[
+    t(v_j|v_i)=\left(x_{v_j},\varphi(v_j),p(v_i,v_j),\tau(v_j)-\tau(v_i),\text{GNN-PE}_{v_j}\right)
+  \]
+  \[
+    h_\text{token}=O\,[h_\text{feat}\|h_\text{type}\|h_\text{hop}\|h_\text{time}\|h_\text{pe}]
+  \]
+  \begin{itemize}
+    \item Mỗi thành phần có encoder riêng để tránh “trộn mất ngữ nghĩa” quá sớm.
+    \item Hợp nhất thành token embedding cho transformer ở tầng sau.
+  \end{itemize}
+\begin{block}{Phân tích ngôn từ}
+  Đây là điểm khác biệt lớn so với nhiều baseline: thay vì ép mọi thông tin vào một vector thô, RELGT giữ cấu trúc thông tin đến sát tầng attention, giúp mô hình quyết định “nên chú ý vào loại thông tin nào”.
+\end{block}
+\end{frame}
+
+% ========================= 11 =========================
+\begin{frame}{RELGT-08: Local + Global module}
+  \[
+    h_\text{local}(v_i)=\text{Pool}\left(\text{EncoderLayer}^{L}(\{h_j\}_{j=1}^{K})\right)
+  \]
+  \[
+    h_\text{global}(v_i)=\text{Attn}(q(v_i),K_\text{cb},V_\text{cb}),\quad
+    c_{v_i}=\arg\min_{b\in[B]}\|q_{v_i}-e_b\|_2
+  \]
+  \[
+    h(v_i)=\text{MLP}\left([h_\text{local}\|h_\text{global}]\right)
+  \]
+\begin{itemize}
+  \item \textbf{Local branch:} mạnh ở chi tiết lân cận và mẫu tương tác ngắn.
+  \item \textbf{Global branch:} bổ sung tri thức xa thông qua codebook centroid.
+\end{itemize}
+\begin{exampleblock}{Ý nghĩa mô hình}
+  Hai nhánh đóng vai trò bổ sung: local chống mất chi tiết, global chống “cận thị cấu trúc”.
+\end{exampleblock}
+\end{frame}
+
+% ========================= 12 =========================
+\begin{frame}{RELGT-09: Loss, độ phức tạp, và rủi ro}
+  \begin{itemize}
+    \item Loss theo task: BCEWithLogits, MAE.
+    \item Chi phí:
+    \[
+      \text{Local } \mathcal{O}(K^2d),\quad \text{Global } \mathcal{O}(KBd)
+    \]
+    \item Rủi ro chính: codebook collapse.
+    \item Giảm thiểu: EMA usage + popularity bias $\log N_b$.
+  \end{itemize}
+\begin{block}{Đánh đổi kỹ thuật}
+  RELGT chấp nhận chi phí attention bậc hai theo $K$ để đổi lấy năng lực biểu đạt cao hơn. Đây là đánh đổi hợp lý khi $K$ được kiểm soát và hạ tầng huấn luyện đủ tốt.
+\end{block}
+\end{frame}
+
+% ========================= 13 =========================
+\begin{frame}{RELGT-10: Kết quả thực nghiệm tiêu biểu}
+  \begin{table}
+    \centering
+    \small
+    \begin{tabular}{lcccc}
+      \toprule
+      Task & LightGBM & GNN & HGT & RELGT \\
+      \midrule
+      driver-top3 (AUC) & 0.724 & 0.785 & 0.791 & \textbf{0.831} \\
+      driver-dnf (AUC) & 0.668 & 0.742 & 0.748 & \textbf{0.801} \\
+      user-churn (AUC) & 0.703 & 0.768 & 0.771 & \textbf{0.812} \\
+      item-sales (MAE) & 142.3 & 128.1 & 125.4 & \textbf{112.6} \\
+      \bottomrule
+    \end{tabular}
+  \end{table}
+\begin{exampleblock}{Diễn giải kết quả}
+  Bảng điểm cho thấy RELGT cải thiện nhất quán trên cả phân loại và hồi quy. Điều này gợi ý rằng kiến trúc không chỉ tối ưu cho một metric cụ thể mà có khả năng tổng quát tốt trên nhiều kiểu tác vụ.
+\end{exampleblock}
+\end{frame}
+
+\begin{frame}{RELGT-11: Phân tích điểm mạnh cốt lõi của RELGT}
+  \begin{block}{Điểm mạnh về mặt mô hình hóa}
+    RELGT đưa bài toán quan hệ từ góc nhìn message passing thuần sang góc nhìn token-attention có cấu trúc, nhờ đó mô hình quyết định linh hoạt hơn: \textbf{thông tin nào quan trọng, ở đâu, và ở thời điểm nào}.
+  \end{block}
+  \begin{itemize}
+    \item \textbf{Tính mô-đun cao:} sampling, tokenization, local/global attention tách lớp rõ ràng.
+    \item \textbf{Tính diễn giải tốt hơn:} có thể theo dõi đóng góp theo nhóm token và theo nhánh local-global.
+    \item \textbf{Tính công nghiệp:} phù hợp precompute, batching lớn, và huấn luyện DDP.
+  \end{itemize}
+  \begin{exampleblock}{Nhận định}
+    Giá trị lớn của RELGT nằm ở chỗ cân bằng được hai mục tiêu thường xung đột: \textbf{biểu đạt mạnh} và \textbf{khả năng mở rộng triển khai}.
+  \end{exampleblock}
+\end{frame}
+
+\begin{frame}{RELGT-12: Giới hạn còn lại và cầu nối sang RelGT++}
+  \begin{alertblock}{Các giới hạn còn tồn tại trong RELGT gốc}
+    Dù đạt kết quả mạnh, RELGT vẫn có các điểm có thể gây trần hiệu năng khi mở rộng quy mô hoặc khi dữ liệu lệch phân phối.
+  \end{alertblock}
+  \begin{itemize}
+    \item \textbf{Fusion còn tĩnh:} concat tuyến tính chưa tái cân bằng đa modality theo từng mẫu.
+    \item \textbf{Codebook dễ lệch:} cơ chế EMA giúp ổn định nhưng chưa đủ mạnh trong mọi phân bố dữ liệu.
+    \item \textbf{Readout một góc nhìn:} có thể bỏ sót tín hiệu hiếm hoặc tương tác khó.
+    \item \textbf{Tương tác local-global:} còn thiên về ghép nối hơn là trao đổi ngữ nghĩa hai chiều.
+  \end{itemize}
+  \begin{block}{Cầu nối logic}
+    Chính các giới hạn này là lý do trực tiếp dẫn tới thiết kế RelGT++: fusion động, codebook mềm có regularization, readout đa góc nhìn, và cầu nối attention hai chiều.
+  \end{block}
+\end{frame}
+
+\section{Phân tích RelGT++}
+
+% ========================= 14 =========================
+\SectionDivider{PHẦN II}{Phân tích RelGT++ (làm kỹ)}
+
+% ========================= 15 =========================
+\begin{frame}{RELGT++-01: Động lực nâng cấp}
+  \begin{block}{Vấn đề cốt lõi quan sát từ RelGT}
+    RelGT đã mạnh ở mức kiến trúc nền, nhưng còn ba điểm gây trần hiệu năng: hợp nhất token còn tĩnh, codebook toàn cục thiếu cơ chế tự ổn định mạnh, và nhánh local-global chưa tương tác đủ sâu.
+  \end{block}
+  \begin{itemize}
+    \item \textbf{Mức biểu diễn:} thông tin đa modal chưa được tái cân bằng theo từng mẫu.
+    \item \textbf{Mức tối ưu:} codebook dễ lệch phân bố khi dữ liệu không đồng đều.
+    \item \textbf{Mức suy luận:} readout một góc nhìn dễ bỏ sót tín hiệu hiếm.
+  \end{itemize}
+  \begin{exampleblock}{Hướng nâng cấp}
+    RelGT++ đưa 6 module để xử lý trực tiếp từng điểm nghẽn: CrossModalGatedFusion, GumbelSoftCodebook, CrossAttentionBridge, MultiViewReadout, SwiGLU FFN, Stochastic Depth.
+  \end{exampleblock}
+\end{frame}
+
+% ========================= 16 =========================
+\begin{frame}{RELGT++-02: CrossModalGatedFusion}
+  \[
+    \text{ctx}_i=\frac{1}{N-1}\sum_{j\ne i}e_j,\quad
+    g_i=\sigma(W^i_\text{self}e_i+W^i_\text{ctx}\text{ctx}_i)
+  \]
+  \[
+    h_\text{fused}=\text{LN}\left(W_\text{out}\sum_{i=1}^{N}g_i\odot W^i_\text{val}e_i\right)
+  \]
+  \begin{block}{Phân tích cơ chế}
+    Thay vì coi 5 nguồn thông tin là ngang nhau như concat, gate học được mức quan trọng của từng modality theo \textbf{ngữ cảnh mẫu hiện tại}. Vì vậy, một node có tín hiệu thời gian mạnh có thể tự động tăng trọng số temporal và giảm các kênh yếu.
+  \end{block}
+  \begin{itemize}
+    \item \textbf{Lợi ích:} tăng tính thích nghi theo từng task và từng mini-batch.
+    \item \textbf{Rủi ro:} nếu gate bão hòa quá sớm, có thể xuất hiện dead modality.
+    \item \textbf{Hàm ý triển khai:} cần theo dõi histogram gate theo epoch.
+  \end{itemize}
+\end{frame}
+
+% ========================= 17 =========================
+\begin{frame}{RELGT++-03: GumbelSoftCodebook + entropy}
+  \[
+    z_{ik}=\frac{-\|x_i-e_k\|_2^2+\text{Gumbel}_k}{\tau},\quad p_k=\text{softmax}(z_{ik})
+  \]
+  \[
+    \mathcal{L}_\text{entropy}=1-\frac{H(\hat p)}{\log B},\quad
+    H(\hat p)=-\sum_{b=1}^{B}\hat p_b\log\hat p_b
+  \]
+  \begin{block}{Phân tích động lực học}
+    Gumbel-Softmax làm assignment mềm trong giai đoạn đầu để khám phá, sau đó annealing nhiệt độ giúp hội tụ cụm sắc nét hơn. Cộng thêm entropy loss để tránh việc vài centroid bị dùng quá mức.
+  \end{block}
+  \begin{itemize}
+    \item \textbf{Khác RelGT:} codebook không chỉ cập nhật theo EMA mà còn nhận gradient trực tiếp.
+    \item \textbf{Tác động kỳ vọng:} tăng độ phủ codebook, giảm collapse.
+    \item \textbf{Điểm cần canh:} lịch giảm $\tau$ phải đủ chậm để không đóng băng sớm.
+  \end{itemize}
+\end{frame}
+
+% ========================= 18 =========================
+\begin{frame}{RELGT++-04: SwiGLU FFN và DropPath}
+  \[
+    \text{FFN}(x)=W_\downarrow\big(\text{SiLU}(W_gx)\odot W_\uparrow x\big)
+  \]
+  \[
+    \text{SD}(x;p)=\frac{x\cdot\mathbf{1}[\text{Bernoulli}(1-p)]}{1-p}
+  \]
+  \begin{block}{Phân tích theo tầng học biểu diễn}
+    SwiGLU tăng khả năng chọn lọc đặc trưng ở FFN; DropPath buộc mạng học đường đi dự phòng qua residual, nhờ đó giảm phụ thuộc vào một nhánh duy nhất.
+  \end{block}
+  \begin{itemize}
+    \item \textbf{SwiGLU:} cải thiện độ mượt gradient khi mô hình sâu.
+    \item \textbf{DropPath:} tăng tính tổng quát bằng regularization cấu trúc.
+    \item \textbf{Hiệu ứng kết hợp:} ổn định train tốt hơn khi batch lớn.
+  \end{itemize}
+\end{frame}
+
+% ========================= 19 =========================
+\begin{frame}{RELGT++-05: MultiViewReadout và CrossAttentionBridge}
+  \[
+    h_\text{local}=\text{LN}\Big(h_i+\text{MLP}([v_\text{attn}\|v_\text{mean}\|v_\text{max}])\Big)
+  \]
+  \[
+    \tilde h_l=h_l+\alpha W_v^g h_g,\quad
+    \tilde h_g=h_g+\beta W_v^l h_l
+  \]
+  \[
+    h_\text{out}=\text{LN}\big(W_\text{out}(\gamma\odot\tilde h_l+(1-\gamma)\odot\tilde h_g)+h_l\big)
+  \]
+  \begin{itemize}
+    \item \textbf{MultiViewReadout:} nhìn đồng thời theo trung bình, nổi bật cục bộ và trọng số attention.
+    \item \textbf{CrossAttentionBridge:} local và global không còn ghép cơ học mà trao đổi thông tin hai chiều.
+  \end{itemize}
+  \begin{exampleblock}{Hàm ý phân tích}
+    Đây là bước chuyển từ “cộng đặc trưng” sang “hợp nhất ngữ nghĩa”, giúp giảm mù thông tin giữa hai nhánh.
+  \end{exampleblock}
+\end{frame}
+
+% ========================= 20 =========================
+\begin{frame}{RELGT++-06: Chi phí tham số và tính toán}
+  \begin{table}
+    \centering
+    \small
+    \begin{tabular}{p{3.1cm}p{3.6cm}p{3.6cm}}
+      \toprule
+      Hạng mục & RelGT & RelGT++ \\
+      \midrule
+      Token fusion & Concat tuyến tính & Gated fusion (nhiều projection) \\
+      Codebook update & VQ-EMA & Gumbel + entropy loss \\
+      Readout & Single-view & Multi-view \\
+      Local-Global mix & Concat & Cross-attention bridge \\
+      \bottomrule
+    \end{tabular}
+  \end{table}
+  \begin{block}{Phân tích đánh đổi}
+    RelGT++ đổi chi phí tính toán và độ phức tạp huấn luyện để lấy chất lượng biểu diễn cao hơn. Đây là đánh đổi hợp lý khi dữ liệu đủ lớn và có hạ tầng train tốt.
+  \end{block}
+  \begin{itemize}
+    \item \textbf{Chi phí tăng:} số phép chiếu tuyến tính và loss phụ.
+    \item \textbf{Lợi ích tăng:} khả năng thích nghi theo mẫu và độ bền với outlier.
+  \end{itemize}
+\end{frame}
+
+% ========================= 21 =========================
+\begin{frame}{RELGT++-07: Điểm nghẽn triển khai phát hiện từ mã}
+  \begin{alertblock}{Top 3 vấn đề}
+    \begin{enumerate}
+      \item Auxiliary losses chưa cộng vào total training loss.
+      \item Agreement loss bị đặt trong \texttt{no\_grad}.
+      \item Đồng bộ centroid index chưa tốt trong DDP.
+    \end{enumerate}
+  \end{alertblock}
+  \begin{block}{Nhận định phân tích}
+    Ba lỗi này không phá mô hình ngay lập tức nhưng làm “mất tác dụng” của các nâng cấp quan trọng, khiến kết quả thực tế thấp hơn tiềm năng thiết kế.
+  \end{block}
+\end{frame}
+
+% ========================= 22 =========================
+\begin{frame}{RELGT++-08: Kế hoạch vá lỗi huấn luyện}
+  \begin{itemize}
+    \item \textbf{Bước 1:} cộng \texttt{model.get\_aux\_loss()} vào total loss theo trọng số rõ ràng.
+    \item \textbf{Bước 2:} bỏ \texttt{no\_grad} ở agreement loss nếu dùng để tối ưu.
+    \item \textbf{Bước 3:} thêm đồng bộ index/codebook theo batch trong DDP.
+  \end{itemize}
+  \begin{block}{Logic triển khai}
+    Vá theo thứ tự “loss wiring $\rightarrow$ gradient flow $\rightarrow$ distributed consistency” để dễ cô lập nguyên nhân khi kiểm thử.
+  \end{block}
+\end{frame}
+
+% ========================= 23 =========================
+\begin{frame}{RELGT++-09: Tác động kỳ vọng sau khi vá}
+  \begin{columns}[T]
+    \column{0.52\textwidth}
+    \begin{block}{Theo lý thuyết mô hình}
+      \begin{itemize}
+        \item Cân bằng centroid tốt hơn
+        \item Cải thiện alignment local-global
+        \item Giảm variance huấn luyện đa GPU
+      \end{itemize}
+    \end{block}
+    \column{0.46\textwidth}
+    \begin{exampleblock}{Theo hệ thống huấn luyện}
+      \begin{itemize}
+        \item Loss curve ổn định hơn
+        \item Ít phụ thuộc may rủi seed
+        \item Sẵn sàng cho ablation thật
+      \end{itemize}
+    \end{exampleblock}
+  \end{columns}
+\begin{alertblock}{Chỉ số nên theo dõi}
+  Entropy codebook, cosine local-global, độ lệch metric giữa các seed và độ dao động giữa các rank.
+\end{alertblock}
+\end{frame}
+
+% ========================= 24 =========================
+\begin{frame}{RELGT++-10: Tổng kết phân tích RelGT++}
+  \begin{itemize}
+    \item RelGT++ không chỉ thêm module mới mà thay đổi cách mô hình \textbf{ra quyết định biểu diễn}.
+    \item Tác động mạnh nhất đến chất lượng thường đến từ fusion động và quản trị codebook.
+    \item Biến số quyết định cuối cùng vẫn là độ chuẩn của training pipeline.
+  \end{itemize}
+  \begin{exampleblock}{Kết luận phân tích}
+    Nếu triển khai đúng, RelGT++ có cơ sở lý thuyết và kỹ thuật để vượt RelGT một cách ổn định hơn, không chỉ theo từng run đơn lẻ.
+  \end{exampleblock}
+  \begin{alertblock}{Cầu nối sang phần so sánh}
+    So sánh RelGT++ với RelGT sẽ dựa trên kết quả phân tích kỹ thuật vừa trình bày.
+  \end{alertblock}
+\end{frame}
+
+\section{So sánh RelGT++ với RelGT}
+
+% ========================= 25 =========================
+\SectionDivider{PHẦN III}{So sánh RelGT++ với RelGT (sau phân tích)}
+
+% ========================= 26 =========================
+\begin{frame}{CMP-01: So sánh kiến trúc tổng thể}
+  \begin{table}
+    \centering
+    \small
+    \begin{tabular}{p{3.0cm}p{4.2cm}p{4.2cm}}
+      \toprule
+      Trục & RelGT & RelGT++ \\
+      \midrule
+      Fusion & Concat tuyến tính & Gated fusion \\
+      Codebook & VQ-EMA & Gumbel + entropy \\
+      Readout & Single-view & Multi-view \\
+      FFN & Chuẩn & SwiGLU \\
+      Bridge & Concat local-global & Cross-attention bridge \\
+      \bottomrule
+    \end{tabular}
+  \end{table}
+\end{frame}
+
+% ========================= 27 =========================
+\begin{frame}{CMP-02: So sánh động lực học huấn luyện}
+  \begin{columns}[T]
+    \column{0.5\textwidth}
+    \begin{block}{RelGT}
+      \begin{itemize}
+        \item Đơn giản, dễ ổn định
+        \item Ít thành phần phụ
+        \item Dễ làm baseline mạnh
+      \end{itemize}
+    \end{block}
+    \column{0.48\textwidth}
+    \begin{block}{RelGT++}
+      \begin{itemize}
+        \item Biểu đạt cao hơn
+        \item Nhạy với thiết lập auxiliary loss
+        \item Cần triển khai chuẩn để phát huy
+      \end{itemize}
+    \end{block}
+  \end{columns}
+\end{frame}
+
+% ========================= 28 =========================
+\begin{frame}{CMP-03: So sánh lợi ích và chi phí}
+  \begin{table}
+    \centering
+    \small
+    \begin{tabular}{p{3.2cm}p{3.8cm}p{3.8cm}}
+      \toprule
+      Hạng mục & RelGT & RelGT++ \\
+      \midrule
+      Chất lượng biểu diễn & Tốt & Tốt hơn (khi train đúng) \\
+      Độ phức tạp triển khai & Vừa & Cao hơn \\
+      Độ ổn định train & Khá ổn & Phụ thuộc plumbing tốt \\
+      Chi phí tinh chỉnh & Thấp hơn & Cao hơn \\
+      \bottomrule
+    \end{tabular}
+  \end{table}
+\end{frame}
+
+% ========================= 29 =========================
+\begin{frame}{CMP-04: Khi nào dùng RelGT và khi nào dùng RelGT++}
+  \begin{itemize}
+    \item Dùng \textbf{RelGT} khi cần baseline mạnh, ổn định, triển khai nhanh.
+    \item Dùng \textbf{RelGT++} khi có đủ thời gian tuning và kiểm soát training pipeline.
+    \item Nếu production nhiều task/phân phối thay đổi: ưu tiên RelGT++ đã vá lỗi đầy đủ.
+  \end{itemize}
+  \begin{exampleblock}{Kết luận phần so sánh}
+    RelGT++ có tiềm năng vượt RelGT, nhưng chất lượng vận hành quyết định hiệu quả thực.
+  \end{exampleblock}
+\end{frame}
+
+\section{Đề xuất RelGT-X}
+
+% ========================= 30 =========================
+\SectionDivider{PHẦN IV}{RelGT-X: Đề xuất tiếp theo}
+
+% ========================= 31 =========================
+\begin{frame}{RELGT-X-01: Mục tiêu thiết kế}
+  \begin{block}{Bối cảnh xuất phát}
+    Sau khi phân tích RelGT++, ta thấy mô hình đã mạnh hơn RelGT nhưng vẫn còn giới hạn về hiệu quả tính toán, ổn định theo thời gian và năng lực chuyển giao giữa task/lược đồ.
+  \end{block}
+  \begin{itemize}
+    \item Giảm chi phí all-pair local attention mà không hy sinh quá nhiều biểu đạt.
+    \item Tách tín hiệu nhân quả và tương quan giả theo thời gian.
+    \item Tăng tính bất biến schema và khả năng transfer đa task.
+  \end{itemize}
+  \[
+    \text{Mục tiêu: } \text{Efficiency} + \text{Causality} + \text{Generalization}
+  \]
+\end{frame}
+
+% ========================= 32 =========================
+\begin{frame}{RELGT-X-02: Kiến trúc tổng thể}
+  \begin{center}
+  \begin{tikzpicture}[
+    node distance=0.55cm and 0.75cm,
+    old/.style={rectangle,draw=softgray,rounded corners=4pt,fill=gray!15,minimum width=2.3cm,minimum height=0.75cm,align=center,font=\scriptsize},
+    neu/.style={rectangle,draw=mainblue,rounded corners=4pt,fill=lightblue,minimum width=2.5cm,minimum height=0.75cm,align=center,font=\scriptsize},
+    arr/.style={-Stealth,thick,mainblue}
+  ]
+    \node[old] (db) {Relational DB};
+    \node[neu, right=of db] (sgsa) {SGSA};
+    \node[neu, right=of sgsa] (rpe) {RPE};
+    \node[neu, right=of rpe] (mlt) {MLT};
+    \node[neu, right=of mlt] (core) {Core};
+    \node[neu, right=of core] (csa) {CSA};
+    \node[neu, below=1.0cm of mlt] (ctd) {CTD};
+    \node[neu, below=1.0cm of core] (hcs) {HCS};
+    \draw[arr] (db) -- (sgsa) -- (rpe) -- (mlt) -- (core) -- (csa);
+    \draw[arr,dashed] (mlt) -- (ctd);
+    \draw[arr,dashed] (ctd) -- (hcs);
+    \draw[arr,dashed] (hcs) -- (core);
+  \end{tikzpicture}
+  \end{center}
+  \begin{exampleblock}{Nguyên tắc thiết kế}
+    RelGT-X không thay toàn bộ pipeline mà gắn module theo lớp: lớp tính toán (SGSA), lớp ngữ nghĩa quan hệ (RPE), lớp nhân quả thời gian (CTD), lớp bộ nhớ phân cấp (HCS), và lớp học bất biến (CSA/MLT).
+  \end{exampleblock}
+\end{frame}
+
+% ========================= 33 =========================
+\begin{frame}{RELGT-X-03: SGSA + RPE}
+  \[
+    \text{SGSA}(Q,K,V)=\text{softmax}\left(\frac{QK^\top}{\sqrt{d_k}}+B+E_\text{rel}\right)V
+  \]
+  \[
+    B_{ij}=
+    \begin{cases}
+      0 & M_{\phi_i,\phi_j}^{(r)}=1\\
+      -\infty & M_{\phi_i,\phi_j}^{(r)}=0
+    \end{cases},\quad
+    \mathcal{O}(\rho K^2d),\ \rho<1
+  \]
+  \[
+    \text{Attn-RPE}_{ij}=\text{Attn}_{ij}+W_\text{rpe}h_\pi(v_i,v_j)
+  \]
+  \begin{itemize}
+    \item \textbf{SGSA:} cắt các cặp attention không hợp lệ theo schema để giảm nhiễu và FLOPs.
+    \item \textbf{RPE:} phục hồi ngữ nghĩa đường đi quan hệ mà hop distance không biểu diễn được.
+  \end{itemize}
+  \begin{block}{Phân tích}
+    Cặp SGSA+RPE giải quyết đồng thời hai bài toán: giảm chi phí tính toán và tăng độ giàu ngữ nghĩa quan hệ trong attention.
+  \end{block}
+\end{frame}
+
+% ========================= 34 =========================
+\begin{frame}{RELGT-X-04: CTD}
+  \[
+    h(v)=f_c(z_c(v))+f_s(z_s(v))
+  \]
+  \[
+    \mathcal{L}_\text{CTD}=\mathcal{L}_\text{pred}+\lambda_1\mathcal{L}_\text{inv}+\lambda_2\mathcal{L}_\text{indep}
+  \]
+  \[
+    \mathcal{L}_\text{inv}=\sum_{e\ne e'}\left\|\mathbb{E}_{v\in\mathcal{E}_e}[z_c]-\mathbb{E}_{v\in\mathcal{E}_{e'}}[z_c]\right\|_2^2
+  \]
+  \[
+    \mathcal{L}_\text{indep}=\|\text{Cov}(z_c,z_s)\|_F^2
+  \]
+  \begin{itemize}
+    \item \textbf{$z_c$} học thành phần ổn định qua các môi trường thời gian.
+    \item \textbf{$z_s$} giữ phần tương quan giả để mô hình không “trộn” nhầm vào quyết định chính.
+  \end{itemize}
+  \begin{alertblock}{Giá trị phân tích}
+    CTD chuyển bài toán từ “học tương quan mạnh nhất” sang “học tín hiệu đáng tin cậy nhất”, đặc biệt hữu ích khi dữ liệu có drift theo mùa/vòng đời.
+  \end{alertblock}
+\end{frame}
+
+% ========================= 35 =========================
+\begin{frame}{RELGT-X-05: HCS, MLT, CSA}
+  \[
+    c_v^{(1)}=\varphi(v),\quad
+    c_v^{(2)}=\arg\min_{b\in\mathcal{B}^{(2)}_{c_v^{(1)}}}\|\text{proj}^{(2)}(q_v)-e_b^{(2)}\|_2
+  \]
+  \[
+    \hat\Theta_\tau=\Theta-\alpha\nabla_\Theta \mathcal{L}_\tau(\Theta)
+  \]
+  \[
+    \mathcal{L}_\text{CSA}
+    =-\frac1N\sum_i\log\frac{\exp(\text{sim}(h_i^{(1)},h_i^{(2)})/\tau_c)}
+    {\sum_j\exp(\text{sim}(h_i^{(1)},h_j^{(2)})/\tau_c)}
+  \]
+  \begin{itemize}
+    \item \textbf{HCS:} tổ chức codebook theo phân cấp schema để giảm collapse cục bộ.
+    \item \textbf{MLT:} làm tokenization thích nghi theo task thay vì một cấu hình cố định.
+    \item \textbf{CSA:} ép biểu diễn ổn định dưới các biến đổi schema-preserving.
+  \end{itemize}
+\end{frame}
+
+% ========================= 36 =========================
+\begin{frame}{RELGT-X-06: Loss tổng và roadmap}
+  \[
+    \mathcal{L}_\text{total}
+    =\mathcal{L}_\text{task}
+    +\lambda_\text{CTD}\mathcal{L}_\text{CTD}
+    +\lambda_\text{HCS}\mathcal{L}_\text{sep}
+    +\lambda_\text{CSA}\mathcal{L}_\text{CSA}
+    +\lambda_\text{entropy}\mathcal{L}_\text{entropy}
+  \]
+  \begin{itemize}
+    \item Tuần 1-4: SGSA + RPE
+    \item Tuần 5-8: CTD + HCS
+    \item Tuần 9-12: MLT + CSA
+    \item Tuần 13-16: Full RelGT-X + ablation
+  \end{itemize}
+  \begin{block}{Tiêu chí đánh giá thành công}
+    Giảm chi phí attention theo $\rho$, tăng độ phủ codebook, cải thiện ổn định theo time-split, và tăng hiệu năng transfer giữa task/schema.
+  \end{block}
+  \begin{exampleblock}{Kết luận cuối}
+    Đã phân tích RelGT++ trước, so sánh sau; từ đó đề xuất RelGT-X theo hướng có thể triển khai và kiểm chứng.
+  \end{exampleblock}
+\end{frame}
+
+\begin{frame}{FINAL-01: Tổng kết và thông điệp hành động}
+  \small
+  \begin{columns}[T]
+    \column{0.49\textwidth}
+    \begin{block}{Điều đã chốt}
+      \begin{itemize}
+        \item RelGT đặt nền với token hóa + local/global attention.
+        \item RelGT++ nâng trần biểu đạt nhưng phụ thuộc vào train pipeline.
+        \item RelGT-X giải quyết đồng thời: efficiency, causality, transfer.
+      \end{itemize}
+    \end{block}
+    \column{0.49\textwidth}
+    \begin{exampleblock}{Hướng hành động}
+      \begin{itemize}
+        \item Ngắn hạn: ổn định plumbing RelGT++ để lấy quick win.
+        \item Trung hạn: rollout SGSA + RPE để giảm FLOPs và giữ chất lượng.
+        \item Dài hạn: hoàn thiện CTD/HCS/CSA cho bối cảnh data drift.
+      \end{itemize}
+    \end{exampleblock}
+  \end{columns}
+  \begin{alertblock}{Kết luận 1 câu}
+    RelGT cho nền tảng, RelGT++ cho hiệu năng, RelGT-X cho độ bền sản xuất:
+    lộ trình tốt nhất là "vá chắc hôm nay, nâng cấp có kiểm chứng ngày mai".
+  \end{alertblock}
+\end{frame}
+
+\end{document}

@@ -1,0 +1,445 @@
+\documentclass[aspectratio=169,11pt]{beamer}
+
+% --- Packages ---
+\usepackage[T5]{fontenc} % Hỗ trợ font tiếng Việt cho PDFLaTeX
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{listings}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{multicol}
+
+\usetikzlibrary{shapes.geometric,arrows.meta,positioning,calc,fit,backgrounds}
+
+% --- HCMUS Colors ---
+\definecolor{hcmusblue}{HTML}{003366}
+\definecolor{hcmusdark}{HTML}{001A33}
+\definecolor{hcmuslight}{HTML}{E8F0FE}
+\definecolor{hcmusgold}{HTML}{C8A951}
+\definecolor{accentgreen}{HTML}{27AE60}
+\definecolor{accentred}{HTML}{E74C3C}
+\definecolor{codebg}{HTML}{1E1E2E}
+\definecolor{softgray}{HTML}{6B7B8D}
+\definecolor{cardgray}{HTML}{F5F7FA}
+
+% --- Beamer Theme ---
+\usetheme{default}
+\usecolortheme{default}
+
+% Remove navigation
+\setbeamertemplate{navigation symbols}{}
+
+% Title page
+\setbeamercolor{title}{fg=white}
+\setbeamercolor{subtitle}{fg=hcmuslight}
+\setbeamercolor{author}{fg=hcmuslight}
+\setbeamercolor{institute}{fg=hcmusgold}
+\setbeamercolor{date}{fg=softgray}
+
+% Frame titles
+\setbeamercolor{frametitle}{fg=hcmusblue,bg=white}
+\setbeamerfont{frametitle}{size=\Large,series=\bfseries}
+
+% Block colors
+\setbeamercolor{block title}{fg=white,bg=hcmusblue}
+\setbeamercolor{block body}{fg=black,bg=hcmuslight}
+\setbeamercolor{block title alerted}{fg=white,bg=accentred}
+\setbeamercolor{block body alerted}{fg=black,bg=red!5}
+\setbeamercolor{block title example}{fg=white,bg=accentgreen}
+\setbeamercolor{block body example}{fg=black,bg=green!5}
+
+% Items
+\setbeamercolor{item}{fg=hcmusblue}
+\setbeamercolor{subitem}{fg=hcmusblue!70}
+\setbeamertemplate{itemize items}[circle]
+
+% Footer
+\setbeamertemplate{footline}{%
+  \leavevmode\hbox{%
+    \begin{beamercolorbox}[wd=.33\paperwidth,ht=2.5ex,dp=1ex,left]{author in head/foot}%
+      \hspace*{1em}{\scriptsize\color{softgray} Phân tích Lý thuyết \& Toán học}%
+    \end{beamercolorbox}%
+    \begin{beamercolorbox}[wd=.34\paperwidth,ht=2.5ex,dp=1ex,center]{title in head/foot}%
+      {\scriptsize\color{softgray} RelGT và RelGT++}%
+    \end{beamercolorbox}%
+    \begin{beamercolorbox}[wd=.33\paperwidth,ht=2.5ex,dp=1ex,right]{date in head/foot}%
+      {\scriptsize\color{softgray}\insertframenumber/\inserttotalframenumber}\hspace*{1em}%
+    \end{beamercolorbox}%
+  }%
+}
+
+% Listings style
+\lstset{
+  basicstyle=\ttfamily\scriptsize,
+  keywordstyle=\color{hcmusblue}\bfseries,
+  commentstyle=\color{accentgreen},
+  stringstyle=\color{accentred},
+  backgroundcolor=\color{codebg},
+  rulecolor=\color{codebg},
+  frame=single,
+  breaklines=true,
+  showstringspaces=false,
+  tabsize=2,
+}
+
+% --- Document ---
+\title{Từ RelGT tới RelGT++}
+\subtitle{Phân Tích Chuyên Sâu: Cơ Sở Lý Thuyết, Kiến Trúc \& Cải Tiến Toán Học}
+\author{Báo Cáo Phân Tích Kỹ Thuật}
+\institute{
+  Graph Transformers in Relational Deep Learning \& Code Analysis
+}
+\date{2025}
+
+\begin{document}
+
+% ============================================================
+% SLIDE 1: Title
+% ============================================================
+{
+\setbeamercolor{background canvas}{bg=hcmusdark}
+\begin{frame}[plain]
+\vspace{1.5cm}
+
+% Gold line
+\begin{tikzpicture}[remember picture,overlay]
+  \draw[hcmusgold, line width=1.5pt] 
+    ([xshift=1.5cm,yshift=-0.8cm]current page.north west) -- 
+    ([xshift=5cm,yshift=-0.8cm]current page.north west);
+\end{tikzpicture}
+
+\begin{center}
+{\Huge\bfseries\color{white} TỪ RelGT ĐẾN RelGT++}\\[12pt]
+{\large\color{hcmuslight} Phân tích Toán học và Kiến trúc Mạng\\[4pt]
+Graph Transformers cho Cơ Sở Dữ Liệu Quan Hệ}\\[20pt]
+{\small\color{hcmusgold}\rule{4cm}{0.5pt}}\\[12pt]
+{\small\color{hcmuslight} Dựa trên Paper RelGT \& Đánh giá Kỹ thuật Nội bộ}\\[16pt]
+{\scriptsize\color{softgray} Relational Deep Learning \quad|\quad Cập nhật Tiếng Việt Chuẩn Hóa }
+\end{center}
+\end{frame}
+}
+
+% ============================================================
+% SLIDE 2: Background RDL
+% ============================================================
+\begin{frame}{Nền tảng: Relational Deep Learning (RDL)}
+\begin{block}{Relational Entity Graphs (REG)}
+Hệ cơ sở dữ liệu quan hệ (Relational DBs) được mô hình hóa thành Đồ thị Thực thể Quan hệ $G=(V, E, \phi, \psi, \tau)$. Ở đây:
+\begin{itemize}
+    \item Tính \textbf{Đa nhãn, dị vị (Heterogeneous)}: Mỗi bảng dữ liệu tạo ra nhiều loại thực thể $\phi$ và quan hệ foreign key $\psi$ khác biệt.
+    \item Tính \textbf{Thời gian (Temporal)}: Các bản ghi được gắn dấu thời gian $\tau$ (timestamp). Mô hình phải học được sự diễn tiến quá khứ mà không rò rỉ dữ liệu tương lai.
+    \item Ràng buộc \textbf{Khuôn dạng (Schema-defined)}: Cấu trúc cố định bởi khóa ngoại, chứ không phải các mạng lưới ngẫu nhiên.
+\end{itemize}
+\end{block}
+\vspace{5pt}
+\centering
+\textbf{Vấn đề:} Mạng GNN cũ (từ RelBench) bị giới hạn tầm nhìn (bottleneck) và phải đi qua các điểm "Hub" gây nghẽn thông tin, không bắt được các mỗi liên kết phụ thuộc xa (Long-range dependencies).
+\end{frame}
+
+% ============================================================
+% SLIDE 3: Motivation
+% ============================================================
+\begin{frame}{Motivation của RelGT: Tại sao dùng Graph Transformers?}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\begin{exampleblock}{Sự Ưu Việt Của Graph Transformers}
+\begin{itemize}
+    \item Cơ chế \textbf{Self-Attention} cung cấp trường cảm thụ toàn cục (Global Field).
+    \item Các node cách xa nhau (VD: Hai khách hàng chung sở thích) có thể tương tác trực tiếp.
+\end{itemize}
+\end{exampleblock}
+
+\column{0.50\textwidth}
+\begin{alertblock}{Rào Cản Hiện Tại}
+\begin{itemize}
+    \item Các kỹ thuật Positional Encoding (PE) truyền thống (Laplacian, random walk...) hoạt động cực kỳ chậm trên đồ thị khổng lồ của Data Quan Hệ.
+    \item Không nạp được các thuộc tính như Multi-table $\to$ Thiếu hụt thông tin.
+\end{itemize}
+\end{alertblock}
+\end{columns}
+
+\vspace{10pt}
+\begin{center}
+\color{hcmusblue}\textbf{Giải pháp Tức thời từ RelGT:} Sử dụng Kỹ thuật Mã hóa Token Đa Yếu Tố (Multi-element Tokenization) để giảm tải và mở rộng trường thông tin!
+\end{center}
+\end{frame}
+
+% ============================================================
+% SLIDE 4: RelGT Token 1
+% ============================================================
+\begin{frame}{RelGT Toán Học (1): Kỹ thuật Tokenization \textit{Đa Yếu Tố}}
+RelGT lấy mẫu một tập đồ thị con gồm $K$ lân cận cho mỗi cụm (VD: $K=300$). Không dùng 1 đại lượng Positional Encoding chung, nó chia node $v_j$ thành 5 tuple độc lập:
+
+\begin{block}{1. Mã hóa Đặc Trưng \& 2. Mã hóa Kiểu (Table Type)}
+\begin{itemize}
+    \item \textbf{Node Feature ($e_{feat}$):} 
+    $e_{feat} = \text{MultiModalEncoder}(x_{v_j})$
+    \\ \small (Hợp nhất dữ liệu số, danh mục, chuỗi văn bản về vector d chiều chung.)
+    \item \textbf{Node Type ($e_{type}$):}
+    $e_{type} = W_{type} \cdot \text{onehot}(\phi(v_j))$
+    \\ \small (Xác định node $v_j$ thuộc bảng nào, e.g. Customer, Transaction hay Product.)
+\end{itemize}
+\end{block}
+
+\end{frame}
+
+% ============================================================
+% SLIDE 5: RelGT Token 2
+% ============================================================
+\begin{frame}{RelGT Toán Học (2): Gắn kết Không Gian \& Thời Gian}
+\begin{block}{3. Hệ thống Hop \& 4. Trục Thời gian}
+\begin{itemize}
+    \item \textbf{Khoảng Cách Cấu Trúc ($e_{hop}$):} 
+    $e_{hop} = W_{hop} \cdot \text{onehot}(p(v_i, v_j))$
+    \\ \small (Quãng đường ngắn nhất từ node xuất phát $v_i$ đến $v_j$.)
+    \item \textbf{Thời gian ($e_{time}$):}
+    $e_{time} = W_{time} \cdot (\tau(v_j) - \tau(v_i))$
+    \\ \small (Ngăn chặn Rò Rỉ Dữ Liệu Tương Lai, tạo trục nhân quả.)
+\end{itemize}
+\end{block}
+
+\begin{block}{5. Subgraph Positional Encoding \& Tổng Kết}
+\begin{itemize}
+    \item \textbf{Cấu trúc Giao điểm ($e_{pe}$):} 
+    $e_{pe} = \text{GNN}(A_{local}, Z_{random})_j$
+    \\ \small (Dùng GNN nhẹ khởi tạo ngẫu nhiên ($Z_{random}$) nhằm phá vỡ tính đối xứng mảng, cấp đặc trưng cấu trúc local mà không cần tính Eigenvector Laplacian.)
+\end{itemize}
+\textbf{Sáp nhập chuỗi Token thành Representation Vector:} \\
+\centering $h_{v_j} = O_{proj} [e_{feat} \Vert \,e_{type} \Vert \,e_{hop} \Vert \,e_{time} \Vert \,e_{pe}]$
+\end{block}
+\end{frame}
+
+
+% ============================================================
+% SLIDE 6: RelGT Architecture
+% ============================================================
+\begin{frame}{RelGT Toán Học (3): Kiến trúc Mạng Local \& Global}
+\begin{columns}[T]
+\column{0.48\textwidth}
+\begin{block}{Local Module (Self-Attention)}
+\small Áp dụng khối Transformer xử lý tập hợp K lân cận $v_i$:
+\[
+h_{loc}(v_i) = \text{Pool}(\text{Trans}(h_{v_i}, h_{v_1}, \dots, h_{v_K}))
+\]
+Tính năng \textit{All-pair Attention} giúp các node chéo nhau tương tác trực tiếp nội bộ khối $K$.
+\end{block}
+
+\column{0.48\textwidth}
+\begin{block}{Global Module (Centroids)}
+\small Khai phá không gian lớn thông qua tập $B$ "Global Tokens" đóng vai trò tâm cụm (K-Means):
+\[
+h_{glo}(v_i) = \text{Pool}(\text{Trans}(h_{loc}(v_i), C_1, \dots))
+\]
+Tâm $C$ cập nhật qua luồng EMA liên tục.
+\end{block}
+\end{columns}
+
+\vspace{5pt}
+\begin{alertblock}{Đầu ra kết dính}
+\[
+h_{out}(v_i) = \text{FFN}([h_{loc}(v_i) \Vert \,h_{glo}(v_i)])
+\]
+Việc sử dụng Concat thuần túy tạo nên sự đứt gãy tương tác dữ liệu!
+\end{alertblock}
+\end{frame}
+
+% ============================================================
+% SLIDE 7: Limitations of RelGT
+% ============================================================
+\begin{frame}{Động lực cho RelGT++: Hạn chế của RelGT Gốc}
+Dù giải quyết được rào cản nền tảng, thiết kế Toán Học của RelGT VẪN bộc lộ 4 nhược điểm lớn:
+
+\begin{enumerate}
+    \item \textbf{Static Modality Fusion:} Toán tử $\text{Concat}$ chắp nối 5 mảng token (Feature, Hop, Time...) một cách bị động. Thuật toán không biết điều chỉnh mức độ quan trọng (VD: Loại bỏ Feature Type nếu yếu tố Thời Gian cực kỳ mấu chốt).
+    \item \textbf{Codebook Collapse (Chết Cụm):} Thuật toán K-Means EMA cập nhật tâm cụm nhưng lại không có quá trình truyền ngược Gradient. Nều 1 vector trung tâm bị lệch quá lớn, nó sẽ bị bỏ qua và "chết" hoàn toàn đi chức năng Global.
+    \item \textbf{Independent Branches:} Luồng $h_{local}$ và $h_{global}$ chạy độc lập. Hàm $\text{FFN}([... \Vert ...])$ không hề giúp chúng tương chiếu đối xứng để lấp đầy điểm mù cho nhau.
+    \item \textbf{Single-View Readout:} RelGT chỉ áp dụng duy nhất lớp Pooling dùng Attention $v = \sum \text{Softmax}(A) n_k$. Nó bỏ mất các nền tảng thông tin cực tiểu và cực đại (Thống kê Mean và Max).
+\end{enumerate}
+\end{frame}
+
+% ============================================================
+% SLIDE 8: Overview RelGT++
+% ============================================================
+\begin{frame}{Giải pháp RelGT++: Phân Tích 6 Nâng Cấp Toán Học}
+\begin{center}
+\begin{tikzpicture}[
+  node distance=0.3cm,
+  box/.style={draw=hcmusblue!60, fill=hcmuslight, rounded corners=3pt,
+              minimum height=1.1cm, minimum width=4.5cm, align=center,
+              font=\small},
+  num/.style={circle, fill=hcmusblue, text=white, font=\bfseries\small,
+              minimum size=0.55cm, inner sep=0pt}
+]
+  % Row 1
+  \node[box] (b1) {\textbf{Cross-Modal Gated Fusion}\\[-1pt]{\scriptsize Dung hợp có trạng thái bằng Cổng Lọc}};
+  \node[box, right=0.4cm of b1] (b2) {\textbf{Gumbel-Soft Codebook}\\[-1pt]{\scriptsize Đạo hàm cụm hóa \& Chống Sụp đổ}};
+  \node[box, right=0.4cm of b2] (b3) {\textbf{Cross-Attention Bridge}\\[-1pt]{\scriptsize Hợp nhất Tầm Nhìn 2 Chiều Nhánh}};
+  
+  % Row 2
+  \node[box, below=0.4cm of b1] (b4) {\textbf{Multi-View Readout}\\[-1pt]{\scriptsize Mở rộng quang phổ Attention+Mean+Max}};
+  \node[box, right=0.4cm of b4] (b5) {\textbf{SwiGLU Gated FFN}\\[-1pt]{\scriptsize Hệ hàm ngắt mở kích hoạt tối ưu}};
+  \node[box, right=0.4cm of b5] (b6) {\textbf{Stochastic Depth}\\[-1pt]{\scriptsize Chống suy thoái trên Graph mảng Sâu}};
+  
+  % Numbers
+  \node[num, above left=-0.15cm and -0.15cm of b1.north west] {1};
+  \node[num, above left=-0.15cm and -0.15cm of b2.north west] {2};
+  \node[num, above left=-0.15cm and -0.15cm of b3.north west] {3};
+  \node[num, above left=-0.15cm and -0.15cm of b4.north west] {4};
+  \node[num, above left=-0.15cm and -0.15cm of b5.north west] {5};
+  \node[num, above left=-0.15cm and -0.15cm of b6.north west] {6};
+\end{tikzpicture}
+\end{center}
+\vspace{4pt}
+\centering
+\textit{Đây là bản nâng cấp cấu trúc thuần túy (Drop-in), tái thiết kế Toán Học và Luồng Tensor mà không bắt buộc điều chỉnh mô-đun Huấn Luyện (Optimizer/Scheduler) ở cấp độ Framework.}
+\end{frame}
+
+% ============================================================
+% SLIDE 9: RelGT++ 1
+% ============================================================
+\begin{frame}{RelGT++ (1): Cross-Modal Gated Fusion}
+Phá hủy sự kiện ghép $\text{Concat}(5 \text{ tokens})$ truyền thống làm gia tăng Dimension dư thừa!
+Mỗi Token $e_i$ sẽ được trang bị hệ số điều hành Cổng ($\text{Gate}\ g_i \in (0, 1)$), được tự động quyết định bởi không gian của chính nó và bối cảnh các Node bên cạnh.
+
+\begin{columns}[T]
+\column{0.48\textwidth}
+\begin{block}{Toán Học: Gated Sum}
+Ngữ cảnh (Context - Trừ bản thân):
+$$ \text{ctx}_i = \frac{1}{N-1}\sum_{j \neq i} e_j $$
+
+Ánh xạ Cổng và Tính Hệ Số ($\sigma$):
+$$ g_i = \sigma(W_{i}^{self} e_i + W_{i}^{ctx} \text{ctx}_i) $$
+
+Triển khai chắt lọc Linear:
+$$ x = \text{LayerNorm}\left(\sum g_i \odot W_{i}^{val} (e_i)\right) $$
+\end{block}
+
+\column{0.48\textwidth}
+\begin{exampleblock}{Kết quả đạt được}
+Thông số được phân bố \textbf{Dynamic Weigthing}. \\ 
+\vspace{5pt}
+Ví dụ: Nút nhấn mạnh Giao dịch sẽ đẩy giá trị $g_{time}$ lên cao điểm; với nút mang tính Vị Trí, hệ số cấu trúc $g_{hop}$ bung ra chiếm ưu thế.
+\end{exampleblock}
+\end{columns}
+\end{frame}
+
+% ============================================================
+% SLIDE 10: RelGT++ 2
+% ============================================================
+\begin{frame}{RelGT++ (2): Gumbel-Soft Codebook \& Codebook Entropy Loss}
+Cứu vãn tâm cụm Global khỏi tình trạng "Codebook Collapse" do mô-đun tịnh tiến bị liệt ở RelGT gốc. 
+
+\begin{itemize}
+    \item \textbf{Cơ chế Vector Nhiễu:} Trực tiếp ép \texttt{nn.Parameter} để lan dẫn Đạo Hàm (Gradient flow). 
+    \item \textbf{Gumbel-Softmax Assignment:} Tiến hành gán cụm "mềm" đi kèm tính ngẫu nhiên khám phá. Có sự triệt tiêu biến thiên nhiệt độ (Annealing $\tau: 2.0 \to 0.5$).
+    $$ z_{ik} = \frac{-||x_i - e_k||^2 + \text{Gumbel}_k}{\tau} $$
+\end{itemize}
+
+\begin{alertblock}{Thuật toán Phạt Codebook Entropy}
+Hàm mất mát $\mathcal{L}_{ent}$ ép Hệ Thống không được lạm dụng một vài Codebook quen thuộc:
+$$ \mathcal{L}_{ent} = 1 - \frac{H(p)}{\log K}, \quad H(p) = -\sum_k p_k \log p_k $$
+Hàm số trở về $0$ nếu phân phối đồng nhất (Uniform), Phạt Max thành $1$ nếu cụm chết.
+\end{alertblock}
+\end{frame}
+
+% ============================================================
+% SLIDE 11: RelGT++ 3
+% ============================================================
+\begin{frame}{RelGT++ (3): Cross-Attention Bridge}
+Tháo bỏ hoàn toàn liên kết $\text{Concat}([h_{local} \Vert \, h_{global}])$ rời rạc. Áp dụng kỹ thuật giao tiếp hai chiều (Bidirectional Local-Global Fusion).
+
+\begin{block}{Cầu Nối Đa Mạch bằng Scalar Dot Product}
+\begin{itemize}
+    \item \textbf{Nhánh Local lấy Tri thức Global}:
+    $\alpha = \sigma(\text{scale} \cdot (q_{\ell} \cdot k_g)) \quad \to \quad \tilde{h}_\ell = h_\ell + \alpha \cdot V_g$ \\
+    \textit{(Local tự lấp điểm mù bằng kiến thức xa của Global)}
+    \item \textbf{Nhánh Global xác nhận lại từ Local}:
+    $\beta = \sigma(\text{scale} \cdot (q_g \cdot k_\ell)) \quad \to \quad \tilde{h}_g = h_g + \beta \cdot V_\ell$ \\
+    \textit{(Global phân giải các khái niệm đặc tả sâu hơn từ Local)}
+\end{itemize}
+\end{block}
+
+Hợp nhất mượt mà cuối mạng nhờ cổng $\gamma$:
+$$ \text{Merged Tensor} = \gamma \odot \tilde{h}_\ell + (1 - \gamma) \odot \tilde{h}_g $$
+\end{frame}
+
+% ============================================================
+% SLIDE 12: RelGT++ 4
+% ============================================================
+\begin{frame}{RelGT++ (4): Tầm Thu Phóng -- Multi-View Readout}
+Local Module không còn bị giới hạn bởi cái nhìn tuyến tính của Attention Pooling (rất dễ bị đánh lừa bởi Pattern nhiễu sai). Mở rộng thành Mạng Phân Tích Tổng Hợp:
+\vspace{10pt}
+
+\begin{tabular}{ll}
+  $v_{\text{attn}} = \sum \text{softmax}(s_k) \cdot n_k$ & \textbf{$\to$ Mức độ Tương đồng cục bộ (Relevance)}\\
+  $v_{\text{mean}} = \frac{1}{K-1} \sum n_k$ & \textbf{$\to$ Khởi lập Cơ sở nền tảng bình quân (Statistics)}\\
+  $v_{\text{max}}  = \max(n_k)$ & \textbf{$\to$ Sàng lọc Các mầm mống đột biến / Cực trị (Max)}\\
+\end{tabular}
+
+\vspace{10pt}
+\begin{block}{Tổ Hợp Kết Tinh (Ensemble)}
+$$ h_{out} = \text{LayerNorm}(h_{seed} + \text{MLP}([v_{attn} \Vert \,v_{mean} \Vert \,v_{max}])) $$
+Tạo lá chắn mạnh mẽ chống ngoại lệ (Outlier), biểu diễn tín hiệu mượt và sắc nét hơn!
+\end{block}
+\end{frame}
+
+% ============================================================
+% SLIDE 13: RelGT++ 5 & 6
+% ============================================================
+\begin{frame}{RelGT++ (5 \& 6): SwiGLU Gated FFN + Stochastic Depth}
+\begin{columns}[T]
+\column{0.48\textwidth}
+\begin{block}{5. Hủy Bỏ GELU để thay bằng SwiGLU FFN}
+\begin{itemize}
+    \item \textbf{Khuyết điểm } $\text{GELU}$: Gây bào mòn tiêu biến Gradient khi ở vùng cực âm.
+    \item \textbf{SwiGLU} (Tương tự LLaMA/Mistral) áp dụng hệ cổng chẩn lọc:
+    $ \text{FFN}(x) = W_{\downarrow}(\text{SiLU}(W_g x) \odot W_{\uparrow} x) $
+    \item Phép nhân ma trận $\odot$ đóng vai trò Mở / Tắt kích hoạt tự do, tăng gấp 4x dung lượng phân nhánh Effect Expansion!
+\end{itemize}
+\end{block}
+
+\column{0.48\textwidth}
+\begin{block}{6. Từ Bỏ Dropout, dùng Stochastic Depth}
+\begin{itemize}
+    \item Dropout thông thường cắt xén nhỏ lẻ mảng Neuron, hủy hoại Pattern hệ thống đồ thị.
+    \item \textbf{Stochastic Depth} drop \textit{Hoàn Toàn} khối Residual Branch với hàm Xác suất $P$ tăng tịnh tiến theo Hệ số Layer.
+    $ x \leftarrow x_{res} + \frac{b}{1-p}\cdot f(x) $
+    \item Đóng vai trò là vòng Ensemble Mở (Implicit Ensemble), triệt tiêu Overfitting.
+\end{itemize}
+\end{block}
+\end{columns}
+\end{frame}
+
+% ============================================================
+% SLIDE 14: Compare & Conclusion
+% ============================================================
+\begin{frame}{Hệ Thống Phân Tích Đặc Biệt: Đánh Đổi Lợi Tức Parameter}
+\begin{center}
+\small
+\begin{tabular}{@{}l l l c@{}}
+\toprule
+\textbf{Xung Yếu Mô Đun} & \textbf{RelGT (Bản Gốc 2025)} & \textbf{RelGT++ (Nâng Cấp)} & \textbf{Đột Phá}\\
+\midrule
+Tokenizer       & Nối ghép Concat tĩnh   & \color{accentgreen}\textbf{Gated Sum Filter Động} & Thích ứng Pattern \\[3pt]
+Hệ Cụm Global        & VQ-EMA (\texttt{buffer}) & \color{accentgreen}\textbf{Gumbel-Soft Parameter} & Chống Liệt Tâm Cụm \\[3pt]
+Hỗn hợp Trục    & Concat Bị động         & \color{accentgreen}\textbf{Cross Attention Ngang} & Tương thích 100\%\\[3pt]
+Khối Readout         & Chật Hẹp (Attention Pool)     & \color{accentgreen}\textbf{Mảng Attn + Mean + Max} & Bắt Trọn Outlier \\[3pt]
+Nhánh FFN             & Đóng băng GELU              & \color{accentgreen}\textbf{Module Điều Phối SwiGLU} & Duy trì Gradient\\[3pt]
+Hệ Phạt Aux Loss    & Hoàn toàn không có               & \color{accentgreen}\textbf{Entropy + K-Agreement} & Gây Đều Hệ Thống \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\vspace{5pt}
+\begin{alertblock}{Kết Luận Tích Hợp (Integration \& Overhead)}
+RelGT++ chỉ gánh thêm tổng phụ phí tham số khoảng \textbf{10 Triệu Paras} (Với mạng Channels=512) - Mức tiêu hao hoàn toàn có lợi so với hiệu suất trả về. \textbf{Mạng mới hoạt động "Drop-in"}: Không can thiệp sửa Data Pipeline, Pipeline Engine của hệ thống máy học gốc!
+\end{alertblock}
+\end{frame}
+
+% ============================================================
+\end{document}

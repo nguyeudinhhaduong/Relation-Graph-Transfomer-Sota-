@@ -1,0 +1,1288 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage{fontspec}
+\usepackage{polyglossia}
+\setmainlanguage{vietnamese}
+\setmainfont{DejaVu Serif}
+\setsansfont{DejaVu Sans}
+\setmonofont[Scale=0.82]{DejaVu Sans Mono}
+
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs,array,multirow,tabularx,longtable}
+\usepackage{xcolor}
+\usepackage[colorlinks=true,linkcolor=blue!65!black,citecolor=green!50!black,urlcolor=blue!70!black]{hyperref}
+\usepackage{enumitem}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,shapes.geometric,calc,
+                decorations.pathreplacing,fit,backgrounds,matrix}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{caption,subcaption}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{tcolorbox}
+\usepackage{listings}
+\usepackage{float}
+\usepackage{bm}
+\usepackage{microtype}
+
+\geometry{top=2.5cm,bottom=2.5cm,left=3cm,right=2.5cm}
+
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{\textcolor{gray!70}{\small RelGT++ -- Phân tích Kỹ thuật}}
+\lhead{\textcolor{gray!70}{\small Từ mã nguồn đến toán học}}
+\cfoot{\thepage}
+\renewcommand{\headrulewidth}{0.3pt}
+
+\titleformat{\section}{\Large\bfseries\color{blue!70!black}}{\thesection}{0.8em}{}[\color{blue!30!black}\titlerule]
+\titleformat{\subsection}{\large\bfseries\color{blue!50!black}}{\thesubsection}{0.7em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries\color{black!75}}{\thesubsubsection}{0.6em}{}
+
+\newtheorem{theorem}{Định lý}[section]
+\newtheorem{proposition}[theorem]{Mệnh đề}
+\newtheorem{definition}{Định nghĩa}[section]
+\newtheorem{remark}{Nhận xét}[section]
+\newtheorem{observation}{Quan sát}[section]
+
+\tcbuselibrary{skins,breakable}
+
+\newtcolorbox{codebox}[1][]{enhanced,colback=gray!5,colframe=gray!40,
+  fonttitle=\bfseries\small\ttfamily,#1,breakable,left=4pt,right=4pt}
+
+\newtcolorbox{mathbox}[1][]{enhanced,colback=green!4,colframe=green!55!black,
+  fonttitle=\bfseries\small,#1,breakable}
+
+\newtcolorbox{insightbox}[1][]{enhanced,colback=orange!4,colframe=orange!65!black,
+  fonttitle=\bfseries\small,title=Nhận xét sâu,#1,breakable}
+
+\newtcolorbox{issuebox}[1][]{enhanced,colback=red!4,colframe=red!50!black,
+  fonttitle=\bfseries\small,title=Vấn đề kỹ thuật,#1,breakable}
+
+\newtcolorbox{designbox}[1][]{enhanced,colback=blue!4,colframe=blue!55!black,
+  fonttitle=\bfseries\small,title=Quyết định thiết kế,#1,breakable}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue!70!black}\bfseries,
+  commentstyle=\color{green!50!black}\itshape,
+  stringstyle=\color{orange!70!black},
+  backgroundcolor=\color{gray!6},
+  frame=single,framerule=0.3pt,
+  breaklines=true,
+  numbers=left,numberstyle=\tiny\color{gray},
+  numbersep=5pt,
+  xleftmargin=15pt,
+  language=Python
+}
+
+% ---------------------------------------------------------------
+\begin{document}
+
+% ==================== TRANG BÌA ====================
+\begin{titlepage}
+\centering\vspace*{1cm}
+
+{\small\scshape\color{gray} Phân tích Kỹ thuật -- Từ Mã nguồn đến Toán học}\\[1em]
+\rule{\textwidth}{2.5pt}\\[0.7em]
+{\Huge\bfseries\color{blue!75!black} Phân tích Chuyên sâu\\[0.4em]
+\Large Kiến trúc \texttt{RelGT++}
+}\\[0.5em]
+\rule{\textwidth}{1pt}\\[2em]
+
+\begin{tcolorbox}[colback=blue!4,colframe=blue!50,width=0.92\textwidth,
+  title={\bfseries Phạm vi phân tích},fonttitle=\bfseries]
+Tài liệu này phân tích \textbf{toàn bộ mã nguồn RelGT++} theo từng module,
+truy xuất công thức toán học trực tiếp từ code, xác định các quyết định
+thiết kế, và chỉ rõ điểm mạnh, điểm yếu, cùng các vấn đề kỹ thuật tiềm ẩn.
+
+\medskip
+\textbf{Các file được phân tích:}
+\texttt{model.py} $\cdot$ \texttt{codebook.py} $\cdot$
+\texttt{local\_module.py} $\cdot$ \texttt{encoders.py} $\cdot$
+\texttt{utils.py} $\cdot$ \texttt{main\_node\_ddp.py}
+\end{tcolorbox}
+
+\vspace{2em}
+\begin{tabular}{lp{9cm}}
+\toprule
+\textbf{Kiến trúc gốc} & RelGT (Dwivedi et al., arXiv:2505.10960) \\
+\textbf{Phiên bản phân tích} & RelGT++ (triển khai cải tiến) \\
+\textbf{Tổng số module mới} & 6 module (so với RelGT gốc) \\
+\textbf{Tổng dòng code} & $\approx$1800 dòng (không tính utils) \\
+\textbf{Ngày phân tích} & \today \\
+\bottomrule
+\end{tabular}
+\vfill
+\end{titlepage}
+
+\tableofcontents\newpage
+
+% ======================================================================
+\section{Bản đồ Kiến trúc Tổng thể}
+% ======================================================================
+
+\subsection{Luồng dữ liệu đầy đủ}
+
+Trước khi đi vào từng module, ta cần nắm rõ luồng tensor qua toàn bộ hệ thống.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  node distance=0.45cm and 0.9cm,
+  box/.style={draw,rounded corners=4pt,minimum width=2.6cm,minimum height=0.75cm,
+              align=center,font=\footnotesize},
+  nb/.style={box,fill=blue!12,draw=blue!55!black},
+  ob/.style={box,fill=gray!12,draw=gray!45},
+  sb/.style={box,fill=green!10,draw=green!55!black},
+  ab/.style={box,fill=orange!10,draw=orange!55!black},
+  arr/.style={-Stealth,thick},
+  dim/.style={font=\tiny\color{red!65!black},align=center}
+]
+
+%% Column 1: Input
+\node[ob] (inp_nt) {neighbor\_types};
+\node[ob,below=0.35cm of inp_nt] (inp_nh) {neighbor\_hops};
+\node[ob,below=0.35cm of inp_nh] (inp_ni) {neighbor\_times};
+\node[ob,below=0.35cm of inp_ni] (inp_tf) {grouped\_tfs};
+\node[ob,below=0.35cm of inp_tf] (inp_ei) {edge\_index};
+
+%% Column 2: Encoders
+\node[nb,right=1.1cm of inp_nt] (enc_t)  {TypeEncoder};
+\node[nb,right=1.1cm of inp_nh] (enc_h)  {HopEncoder};
+\node[nb,right=1.1cm of inp_ni] (enc_ti) {TimeEncoder};
+\node[nb,right=1.1cm of inp_tf] (enc_f)  {TfsEncoder\\(ResNet/TF)};
+\node[nb,right=1.1cm of inp_ei] (enc_pe) {GNNPEEncoder\\(GIN x4)};
+
+%% Dims after encoding
+\node[dim,right=0.15cm of enc_t]  {[B,K,d]};
+\node[dim,right=0.15cm of enc_h]  {[B,K,d]};
+\node[dim,right=0.15cm of enc_ti] {[B,K,d]};
+\node[dim,right=0.15cm of enc_f]  {[B,K,d]};
+\node[dim,right=0.15cm of enc_pe] {[B,K,d]};
+
+%% Column 3: Fusion
+\node[ab,right=2.5cm of enc_h,yshift=-0.5cm]  (fusion) {CrossModal\\GatedFusion};
+\node[dim,right=0.15cm of fusion] {[B,K,d]};
+
+%% Column 4: RelGT Layer
+\node[nb,right=1.3cm of fusion,yshift=1.2cm]  (local)  {LocalModule\\(Transformer)};
+\node[nb,right=1.3cm of fusion,yshift=-1.2cm] (global) {GlobalModule\\(VQ Attn)};
+\node[dim,right=0.1cm of local]  {[B,d]};
+\node[dim,right=0.1cm of global] {[B,d]};
+
+%% Column 5: Bridge + FF
+\node[sb,right=1.2cm of local,yshift=-1.2cm]  (bridge) {CrossAttn\\Bridge};
+\node[nb,right=1.2cm of bridge] (ff) {FF + BN};
+\node[dim,right=0.1cm of ff] {[B,d]};
+
+%% Column 6: Head
+\node[ab,right=1.1cm of ff] (head) {MLP Head};
+\node[ob,right=1cm of head] (out)  {$\hat{y}$};
+
+%% Arrows: inputs to encoders
+\foreach \s/\t in {inp_nt/enc_t,inp_nh/enc_h,inp_ni/enc_ti,inp_tf/enc_f,inp_ei/enc_pe}
+  \draw[arr,gray!60] (\s) -- (\t);
+
+%% Encoders to fusion
+\foreach \s in {enc_t,enc_h,enc_ti,enc_f,enc_pe}
+  \draw[arr,blue!50] (\s.east) -- ++(0.35,0) |- (fusion.west);
+
+%% Fusion to local and global
+\draw[arr] (fusion.east) -- ++(0.4,0) |- (local.west);
+\draw[arr] (fusion.east) -- ++(0.4,0) |- (global.west)
+  node[midway,right,font=\tiny]{$x=x\_set[:,0,:]$};
+
+%% Local + Global to bridge
+\draw[arr] (local.east)  -- ++(0.3,0) |- (bridge.west);
+\draw[arr] (global.east) -- ++(0.3,0) |- (bridge.west);
+
+%% Bridge to FF
+\draw[arr] (bridge) -- (ff);
+
+%% FF to head to output
+\draw[arr] (ff) -- (head);
+\draw[arr] (head) -- (out);
+
+%% Aux loss annotation
+\node[font=\tiny\color{red!60},below=0.15cm of bridge] {aux losses};
+
+\end{tikzpicture}
+\caption{Luồng tensor đầy đủ trong RelGT++. Số liệu chiều tensor được ghi màu đỏ.}
+\label{fig:full_flow}
+\end{figure}
+
+\subsection{Bảng tham số theo module}
+
+\begin{table}[H]
+\centering\small
+\caption{Kích thước tham số ước tính ($d=512$, $B_\text{centroids}=4096$, $K=300$, $H=4$)}
+\begin{tabular}{llrr}
+\toprule
+\textbf{Module} & \textbf{File} & \textbf{Tham số (approx)} & \textbf{\% tổng} \\
+\midrule
+NeighborTfsEncoder (ResNet/TF) & encoders.py & $\sim$8.4M & 54\% \\
+CrossModalGatedFusion & model.py & $\sim$3.9M & 25\% \\
+LocalModule (Transformer) & local\_module.py & $\sim$1.6M & 10\% \\
+GlobalModule (VQ Attn) & model.py & $\sim$0.5M & 3\% \\
+GumbelSoftCodebook & codebook.py & $\sim$0.4M & 2\% \\
+CrossAttentionBridge & model.py & $\sim$0.3M & 2\% \\
+GNNPEEncoder (GIN) & encoders.py & $\sim$0.2M & 1\% \\
+TypeEncoder + HopEncoder & encoders.py & $\sim$0.05M & $<$1\% \\
+TimeEncoder & encoders.py & $\sim$0.05M & $<$1\% \\
+MLP Head & model.py & $\sim$0.26M & 2\% \\
+\midrule
+\textbf{Tổng} & & $\sim$\textbf{15.6M} & 100\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ======================================================================
+\section{Module 1: Hệ thống Encoder (encoders.py)}
+% ======================================================================
+
+\subsection{NeighborNodeTypeEncoder}
+
+\subsubsection{Mã nguồn và công thức}
+
+\begin{codebox}[title={encoders.py -- NeighborNodeTypeEncoder.forward()}]
+\begin{lstlisting}
+def forward(self, type_indices):
+    return self.embedding(type_indices)
+# nn.Embedding(num_types + 1, embedding_dim)
+\end{lstlisting}
+\end{codebox}
+
+\begin{mathbox}[title={Công thức toán học}]
+\begin{equation}
+  h_\text{type}(v_j) = W_\text{type}[\varphi(v_j)] \in \mathbb{R}^d
+  \label{eq:type_enc}
+\end{equation}
+với $W_\text{type} \in \mathbb{R}^{(|\mathcal{T}|+1) \times d}$ là ma trận nhúng.
+Chiều $+1$ để xử lý kiểu ``unknown''. Kích thước từ điển thực:
+$\texttt{num\_types} = \max(\text{node\_type\_map.values()}) + 1$.
+\end{mathbox}
+
+\begin{insightbox}
+\textbf{Khác biệt so với RelGT gốc:} RelGT gốc sử dụng one-hot rồi nhân với ma trận
+$W_\text{type}$ tường minh (công thức~\ref{eq:type_enc} trong paper). RelGT++ dùng
+\texttt{nn.Embedding} -- về mặt toán học tương đương, nhưng hiệu quả hơn vì tránh
+phép nhân ma trận one-hot thưa thớt.
+\end{insightbox}
+
+\subsection{NeighborHopEncoder}
+
+\begin{codebox}[title={encoders.py -- NeighborHopEncoder.forward()}]
+\begin{lstlisting}
+def forward(self, hop_distances):
+    shifted = hop_distances + 1   # shift: hop 1 -> idx 2, hop 0 -> idx 1
+    return self.embedding(shifted)
+# nn.Embedding(max_neighbor_hop + 2, embedding_dim)
+\end{lstlisting}
+\end{codebox}
+
+\begin{mathbox}[title={Công thức toán học}]
+\begin{equation}
+  h_\text{hop}(v_i, v_j) = W_\text{hop}[p(v_i,v_j) + 1] \in \mathbb{R}^d
+\end{equation}
+với $p(v_i,v_j) \in \{0,1,2,3\}$, $W_\text{hop} \in \mathbb{R}^{(h_\text{max}+2)\times d}$.
+Dịch chuyển $+1$ để chỉ số 0 giữ nguyên cho padding/unknown.
+\end{mathbox}
+
+\begin{designbox}
+\textbf{max\_neighbor\_hop = 3} trong RelGTTokens (utils.py, dòng 234):
+\begin{center}
+\texttt{self.max\_neighbor\_hop = 2 + 1}
+\end{center}
+Nghĩa là: hop=1 (lân cận 1 bước), hop=2 (lân cận 2 bước), hop=3 (fallback ngẫu nhiên).
+Từ điển embedding có kích thước $3+2=5$.
+\end{designbox}
+
+\subsection{NeighborTimeEncoder}
+
+\subsubsection{Thiết kế hai giai đoạn}
+
+\begin{codebox}[title={encoders.py -- NeighborTimeEncoder.forward() (rút gọn)}]
+\begin{lstlisting}
+def forward(self, rel_time):   # rel_time: [B, K] seconds
+    B, K = rel_time.shape
+    flattened_time = rel_time.view(-1)              # [B*K]
+    pos_encoded = self.pos_encoder(flattened_time)  # [B*K, d]
+    linear_out  = self.linear(pos_encoded)          # [B*K, d]
+    linear_out  = linear_out.view(B, K, -1)         # [B, K, d]
+    mask        = (rel_time < 0).unsqueeze(-1).float()
+    out = (1 - mask) * linear_out + mask * self.mask_vector
+    return out
+\end{lstlisting}
+\end{codebox}
+
+\begin{mathbox}[title={Công thức toán học đầy đủ}]
+\textbf{Bước 1 -- Positional Encoding (Vaswani et al.):}
+\begin{equation}
+  \text{PE}(\Delta\tau)_{2k}   = \sin\!\left(\frac{\Delta\tau}{10000^{2k/d}}\right),
+  \quad
+  \text{PE}(\Delta\tau)_{2k+1} = \cos\!\left(\frac{\Delta\tau}{10000^{2k/d}}\right)
+  \label{eq:pe_sin}
+\end{equation}
+
+\textbf{Bước 2 -- Chiếu tuyến tính:}
+\begin{equation}
+  h'_\text{time} = W_\text{time} \cdot \text{PE}(\Delta\tau) + b_\text{time}
+  \in \mathbb{R}^d
+\end{equation}
+
+\textbf{Bước 3 -- Xử lý token không có thời gian ($\Delta\tau < 0$):}
+\begin{equation}
+  \boxed{h_\text{time}(v_j) = (1 - m_j) \cdot h'_\text{time} + m_j \cdot \bm{\mu}_\text{mask}}
+  \label{eq:time_enc}
+\end{equation}
+với $m_j = \mathbf{1}[\Delta\tau_j < 0]$ và $\bm{\mu}_\text{mask} \in \mathbb{R}^d$
+là tham số có thể học khởi tạo bằng $\mathbf{0}$.
+\end{mathbox}
+
+\begin{insightbox}
+\textbf{Tại sao dùng giây ($\Delta\tau$ tính bằng giây)?} Trong \texttt{utils.py}:
+\begin{center}
+\texttt{relative\_time\_days = (seed\_time - nbr\_time) / (60 * 60 * 24)}
+\end{center}
+Dữ liệu lưu bằng \emph{ngày}, nhưng \texttt{NeighborTimeEncoder} trong
+\texttt{model.py} gọi \texttt{neighbor\_times.float()} trực tiếp -- không có
+chuyển đổi đơn vị bổ sung. Giá trị $\Delta\tau$ đưa vào PE là số ngày.
+PE có chu kỳ $2\pi \cdot 10000^{2k/d}$ -- với $d=512$ và $k=0$, chu kỳ là
+$2\pi \approx 6.28$ ngày. Điều này nghĩa là PE có độ phân giải tốt cho
+khoảng thời gian $\sim$1 tuần trở xuống.
+\end{insightbox}
+
+\subsection{NeighborTfsEncoder (Encoder chính -- 54\% tham số)}
+
+\subsubsection{Kiến trúc ResNet đa phương thức}
+
+\begin{mathbox}[title={Pipeline mã hóa đặc trưng bảng}]
+Với mỗi loại node $t \in \mathcal{T}$ và batch $\mathbf{X}^{(t)}$
+gồm $N_t$ hàng từ bảng $t$:
+
+\textbf{Bước 1 -- Mã hóa theo phương thức:}
+\begin{align}
+  h_\text{cat}^{(t)}  &= \text{EmbeddingEncoder}(\mathbf{X}^{(t)}_\text{cat})
+    & &(\text{phân loại})\\
+  h_\text{num}^{(t)}  &= \text{LinearEncoder}(\mathbf{X}^{(t)}_\text{num})
+    & &(\text{số})\\
+  h_\text{text}^{(t)} &= \text{LinearEmbeddingEncoder}(\mathbf{X}^{(t)}_\text{text})
+    & &(\text{văn bản -- GloVe})\\
+  h_\text{ts}^{(t)}   &= \text{TimestampEncoder}(\mathbf{X}^{(t)}_\text{ts})
+    & &(\text{nhãn thời gian})
+\end{align}
+
+\textbf{Bước 2 -- ResNet tổng hợp:}
+\begin{equation}
+  h_\text{feat}^{(t)} = \text{ResNet}\!\left(
+    \bigoplus_{m} h_m^{(t)};\;
+    \theta^{(t)}_\text{resnet}
+  \right) \in \mathbb{R}^{N_t \times d}
+  \label{eq:tfs_enc}
+\end{equation}
+với $\bigoplus$ là phép gộp qua các phương thức (mean/concat trong TF ResNet).
+\end{mathbox}
+
+\subsubsection{Chiến lược Grouping và Scatter}
+
+Đây là điểm kỹ thuật quan trọng nhất trong NeighborTfsEncoder:
+
+\begin{codebox}[title={encoders.py -- forward() -- nhóm theo kiểu node}]
+\begin{lstlisting}
+# Pre-allocate flat buffer [N_total, d]
+encoded_flat_tensor = torch.zeros((N, self.channels), device=device)
+
+for t_int, big_tf in grouped_tfs.items():        # one pass per node type
+    out_t = encoder(big_tf)                       # [N_t, d]
+    idx_tensor = torch.tensor(grouped_indices[t_int], ...)
+    encoded_flat_tensor[idx_tensor] = out_t       # scatter back
+
+# Scatter [N_total, d] -> [B, K, d]
+output[indices_i, indices_j] = encoded_flat_tensor
+\end{lstlisting}
+\end{codebox}
+
+\begin{mathbox}[title={Sơ đồ Grouping-Encode-Scatter}]
+\begin{equation}
+  \underbrace{[B, K]}_{\text{neighbor\_types}}
+  \xrightarrow{\text{group by type}}
+  \underbrace{\{(t, \text{big\_tf}_t)\}_{t \in \mathcal{T}}}_{\text{nhóm theo bảng}}
+  \xrightarrow{\text{ResNet per type}}
+  \underbrace{[N_\text{total}, d]}_{\text{flat encodings}}
+  \xrightarrow{\text{scatter}}
+  \underbrace{[B, K, d]}_{\text{output}}
+\end{equation}
+\end{mathbox}
+
+\begin{insightbox}
+\textbf{Tại sao grouping quan trọng?} Nếu mã hóa từng token riêng lẻ,
+ta cần $B \times K$ lần forward qua ResNet. Với $B=512$, $K=300$: \textbf{153,600 lần}.
+Với grouping, chỉ cần $|\mathcal{T}|$ lần ($\sim$3--8 lần tùy dataset).
+Speedup lý thuyết: $\sim$20,000--50,000$\times$.
+\end{insightbox}
+
+\begin{issuebox}
+\textbf{NaN/Inf handling (dòng 233--237):}
+\begin{lstlisting}[numbers=none]
+big_tf.feat_dict[stype] = torch.nan_to_num(tensor, nan=0.0, posinf=1e6, neginf=-1e6)
+\end{lstlisting}
+Đây là biện pháp phòng thủ nhưng có thể che giấu lỗi dữ liệu. Giá trị $10^6$
+được clip vào đặc trưng số học có thể tạo ra gradient bùng nổ nếu không được
+normalize trước. \textbf{Khuyến nghị:} Thêm kiểm tra cảnh báo (warning) khi
+tỉ lệ NaN $>1\%$.
+\end{issuebox}
+
+\subsection{GNNPEEncoder}
+
+\subsubsection{Kiến trúc GIN với Residual}
+
+\begin{codebox}[title={encoders.py -- GNNPEEncoder.forward() (rút gọn)}]
+\begin{lstlisting}
+x_input = torch.randn(total_nodes, 1, device=device)  # stochastic init
+x = self.input_proj(x_input)                           # [N, d//4]
+
+outputs = []
+for i, conv in enumerate(self.conv):           # 4 GIN layers
+    x_res = x
+    x_new = conv(x, edge_index)                # GINConv
+    x_new = self.bns[i](x_new)
+    x_new = F.relu(x_new)
+    x = x_new + x_res                          # residual connection
+    outputs.append(x)
+
+x = self.final_transform(outputs[-1])          # [N, d]
+out = x.view(B, K, -1)                         # [B, K, d]
+\end{lstlisting}
+\end{codebox}
+
+\begin{mathbox}[title={Công thức GIN với Residual}]
+\textbf{Khởi tạo ngẫu nhiên:} $Z^{(0)} \sim \mathcal{N}(0, I) \in \mathbb{R}^{K \times 1}$
+
+\textbf{Input projection:} $X^{(0)} = W_\text{proj} Z^{(0)} \in \mathbb{R}^{K \times d/4}$
+
+\textbf{GIN layer $l$:}
+\begin{equation}
+  X^{(l)}_\text{new} = \text{BN}\!\left(
+    \text{MLP}_l\!\left(
+      (1 + \epsilon_l) X^{(l-1)} + \sum_{j \in \mathcal{N}(v)} X^{(l-1)}_j
+    \right)
+  \right)
+\end{equation}
+\begin{equation}
+  X^{(l)} = \text{ReLU}(X^{(l)}_\text{new}) + X^{(l-1)}
+  \quad \text{(residual)}
+  \label{eq:gin_res}
+\end{equation}
+
+\textbf{Chiếu cuối:}
+\begin{equation}
+  h_\text{pe}(v_j) = W_\text{final} X^{(L)}_j \in \mathbb{R}^d
+\end{equation}
+\end{mathbox}
+
+\begin{observation}
+\textbf{Chiều ẩn = $d/4$:}
+\begin{center}
+\texttt{self.layer\_embedding\_dim = embedding\_dim // 4}
+\end{center}
+Với $d=512$, GIN hoạt động ở $d_\text{GIN}=128$, rồi chiếu lên $d=512$ ở bước cuối.
+Thiết kế này tiết kiệm $\sim$16$\times$ tham số trong các lớp GIN
+($4 \times 128^2 = 65\text{K}$ thay vì $4 \times 512^2 = 1\text{M}$).
+\end{observation}
+
+\begin{issuebox}
+\textbf{Permutation equivariance bị vi phạm:} Dòng 346:
+\begin{center}
+\texttt{x\_input = torch.randn(total\_nodes, 1, device=device)}
+\end{center}
+Mỗi lần forward tạo ra $Z_\text{random}$ khác nhau. Điều này có nghĩa:
+với cùng một đồ thị con, hai lần chạy cho ra $h_\text{pe}$ khác nhau.
+Đây là \emph{intentional} (theo paper, giúp tăng expressiveness) nhưng
+gây ra \textbf{variance cao trong inference} -- mô hình phải học cách
+trung bình hóa qua nhiều lần random initialization.
+
+\textbf{Vấn đề thực tế:} Khi $K=300$ node và $L=4$ lớp GIN, gradient
+của $Z_\text{random}$ không tồn tại (detached bởi \texttt{randn}).
+Chỉ tham số $W_\text{proj}$ và $W_\text{final}$ nhận gradient -- nghĩa là
+GIN học cách ``đọc cấu trúc graph'' từ nhiễu ngẫu nhiên, không phải từ
+đặc trưng xác định.
+\end{issuebox}
+
+% ======================================================================
+\section{Module 2: CrossModalGatedFusion (model.py)}
+% ======================================================================
+
+\subsection{Phân tích Công thức}
+
+\begin{codebox}[title={model.py -- CrossModalGatedFusion.forward()}]
+\begin{lstlisting}
+def forward(self, embeddings: list):   # list of N tensors [B, K, C]
+    total = sum(embeddings)            # [B, K, C]  -- sum of all N modalities
+    fused = torch.zeros_like(embeddings[0])
+    for i in range(N):
+        ctx = (total - embeddings[i]) / max(N - 1, 1)  # mean of others
+        gate = torch.sigmoid(
+            self.self_projs[i](embeddings[i]) + self.ctx_projs[i](ctx)
+        )
+        val = self.val_projs[i](embeddings[i])
+        fused = fused + gate * val
+    return self.layer_norm(self.out_proj(fused))
+\end{lstlisting}
+\end{codebox}
+
+\begin{mathbox}[title={Công thức CrossModalGatedFusion đầy đủ}]
+Với $N=5$ phương thức, mỗi $e_i \in \mathbb{R}^{B \times K \times d}$:
+
+\textbf{Bước 1 -- Context cho phương thức $i$:}
+\begin{equation}
+  \text{ctx}_i = \frac{1}{N-1}\sum_{j \ne i} e_j
+  = \frac{\sum_{j=1}^N e_j - e_i}{N-1}
+  \label{eq:cmgf_ctx}
+\end{equation}
+
+\textbf{Bước 2 -- Gate:}
+\begin{equation}
+  g_i = \sigma\!\left(W^i_\text{self}\, e_i + W^i_\text{ctx}\, \text{ctx}_i\right)
+  \in [0,1]^{B \times K \times d}
+  \label{eq:cmgf_gate}
+\end{equation}
+
+\textbf{Bước 3 -- Value:}
+\begin{equation}
+  \text{val}_i = W^i_\text{val}\, e_i \in \mathbb{R}^{B \times K \times d}
+\end{equation}
+
+\textbf{Bước 4 -- Fusion:}
+\begin{equation}
+  f = \sum_{i=1}^N g_i \odot \text{val}_i \in \mathbb{R}^{B \times K \times d}
+\end{equation}
+
+\textbf{Bước 5 -- Output:}
+\begin{equation}
+  \boxed{h_\text{fused} = \text{LN}\!\left(W_\text{out}\, f\right) \in \mathbb{R}^{B \times K \times d}}
+  \label{eq:cmgf_out}
+\end{equation}
+\end{mathbox}
+
+\subsection{So sánh với RelGT gốc}
+
+\begin{table}[H]
+\centering\small
+\caption{So sánh cơ chế kết hợp phương thức}
+\begin{tabular}{lll}
+\toprule
+\textbf{Tính chất} & \textbf{RelGT gốc} & \textbf{RelGT++ (CMGF)} \\
+\midrule
+Công thức & $h = W_O \cdot [e_1\|e_2\|e_3\|e_4\|e_5]$ & $h = \text{LN}(W_O \sum_i g_i \odot W_i^v e_i)$ \\
+Tham số & $W_O \in \mathbb{R}^{5d \times d}$ & $3Nd^2 + d^2$ ($\approx 15d^2 + d^2$) \\
+Phương thức tắt & Không thể & Có thể: $g_i \to 0$ \\
+Per-token adaptive & Không & Có \\
+Gradient qua phương thức & Đồng đều & Được điều chỉnh bởi gate \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{insightbox}
+\textbf{Lợi thế chính:} Gate $g_i$ phụ thuộc vào cả nội dung của phương thức $i$
+\emph{và} bối cảnh từ tất cả phương thức khác. Điều này cho phép mô hình học rằng,
+ví dụ, \emph{khi đặc trưng bảng của node rất giàu thông tin} (giá trị $e_4$ lớn),
+hãy giảm tầm quan trọng của hop encoder (giảm $g_3$).
+
+\textbf{Số tham số:} $N=5$ phương thức, mỗi phương thức có 3 ma trận $d \times d$
+($W_\text{self}$, $W_\text{ctx}$, $W_\text{val}$) cộng thêm $W_\text{out}$:
+$(3 \times 5 + 1) \times 512^2 = 4{,}194{,}304 \approx 4$M tham số.
+\end{insightbox}
+
+\begin{issuebox}
+\textbf{Vấn đề gradient cho phương thức yếu:} Nếu phương thức $i$ không mang
+thông tin, gate $g_i \to 0$ -- nhưng gradient cũng bị chặn tại đây:
+$\partial \mathcal{L} / \partial e_i \approx g_i \cdot (\ldots) \approx 0$.
+Điều này có thể dẫn đến tình trạng một phương thức ``chết'' hoàn toàn
+(dead modality) và không thể phục hồi sau đó.
+\end{issuebox}
+
+% ======================================================================
+\section{Module 3: LocalModule và EncoderLayer (local\_module.py)}
+% ======================================================================
+
+\subsection{Kiến trúc Tổng thể LocalModule}
+
+\begin{mathbox}[title={LocalModule forward pass}]
+\begin{equation}
+  X^{(0)} = W_\text{embed}\, h_\text{fused} \in \mathbb{R}^{B \times K \times d}
+  \quad (d_\text{in} \to d_\text{hidden})
+\end{equation}
+\begin{equation}
+  X^{(l)} = \text{EncoderLayer}_l(X^{(l-1)}), \quad l = 1, \ldots, L
+\end{equation}
+\begin{equation}
+  X_\text{final} = \text{LN}(X^{(L)}) \in \mathbb{R}^{B \times K \times d}
+\end{equation}
+\begin{equation}
+  h_\text{local}(v_i) = \text{MultiViewReadout}(X_\text{final}) \in \mathbb{R}^{B \times d}
+\end{equation}
+\end{mathbox}
+
+\subsection{StochasticDepth}
+
+\begin{codebox}[title={local\_module.py -- StochasticDepth.forward()}]
+\begin{lstlisting}
+def forward(self, x):
+    if not self.training or self.drop_prob == 0.0:
+        return x
+    keep = torch.rand(1, device=x.device) > self.drop_prob
+    return x * keep.float() / (1.0 - self.drop_prob)
+\end{lstlisting}
+\end{codebox}
+
+\begin{mathbox}[title={Công thức Stochastic Depth (DropPath)}]
+\begin{equation}
+  \text{SD}(x;\, p) = \frac{x \cdot \mathbf{1}[\text{Bernoulli}(1-p)]}{1-p}
+  \label{eq:sd}
+\end{equation}
+
+Tỉ lệ drop tăng tuyến tính theo chiều sâu lớp:
+\begin{equation}
+  p_l = 0.05 \cdot \frac{l+1}{\max(L, 1)}, \quad l = 0, 1, \ldots, L-1
+  \label{eq:sd_rate}
+\end{equation}
+Với $L=1$: $p_0 = 0.05$.
+\end{mathbox}
+
+\begin{observation}
+\textbf{DropPath vs Dropout:} Dropout loại bỏ từng \emph{phần tử} độc lập.
+DropPath (Stochastic Depth) loại bỏ toàn bộ \emph{layer output} cho một
+sample trong batch. Điều này hiệu quả hơn cho Transformer vì nó buộc
+residual connection phải học biểu diễn đủ tốt mà không cần sự trợ giúp
+từ sub-layer.
+
+\textbf{Lưu ý quan trọng:} Trong code, \texttt{torch.rand(1)} tạo
+\emph{một giá trị scalar} -- tức toàn bộ batch cùng drop hay không.
+Đây là \textbf{layer-level} stochastic depth, không phải sample-level.
+\end{observation}
+
+\subsection{GatedFFN (SwiGLU)}
+
+\begin{codebox}[title={local\_module.py -- GatedFFN.forward()}]
+\begin{lstlisting}
+def forward(self, x):         # x: [B, K, D]
+    x = permute_bn(x)         # BN over D dimension
+    gate = F.silu(self.w_gate(x))    # [B, K, ffn_size]
+    up   = self.w_up(x)              # [B, K, ffn_size]
+    x    = self.w_down(self.dropout(gate * up))  # [B, K, D]
+    x    = self.dropout(x)
+    x    = permute_bn_out(x)  # BN over D
+    return x
+\end{lstlisting}
+\end{codebox}
+
+\begin{mathbox}[title={Công thức SwiGLU FFN}]
+\begin{equation}
+  \text{GatedFFN}(x) = \text{BN}_\text{out}\!\left(
+    W_\text{down} \bigl(
+      \underbrace{\text{SiLU}(W_\text{gate}\, x)}_{\text{cổng}} \odot
+      \underbrace{W_\text{up}\, x}_{\text{giá trị}}
+    \bigr)
+  \right)
+  \label{eq:swiglu}
+\end{equation}
+với $\text{SiLU}(x) = x \cdot \sigma(x)$ (Sigmoid Linear Unit).
+
+\textbf{Kích thước:}
+\begin{itemize}[nosep]
+  \item $W_\text{gate}, W_\text{up} \in \mathbb{R}^{d \times d_\text{ffn}}$
+  \item $W_\text{down} \in \mathbb{R}^{d_\text{ffn} \times d}$
+  \item $d_\text{ffn} = \texttt{ffn\_size} \times 2 = 2d_\text{hidden}$
+        (vì EncoderLayer truyền \texttt{ffn\_size * 2})
+\end{itemize}
+Thực tế: LocalModule đặt \texttt{ffn\_dim = 2 * hidden\_dim}, rồi
+EncoderLayer truyền vào GatedFFN với \texttt{ffn\_size * 2}.
+Vậy expansion factor thực là $\mathbf{4\times}$.
+\end{mathbox}
+
+\begin{insightbox}
+\textbf{BatchNorm trên 3D tensor:} Code dùng \texttt{x.permute(0, 2, 1)}
+trước khi áp dụng \texttt{nn.BatchNorm1d}. Lý do: BN1d mong đợi
+\texttt{[N, C, L]} (channel ở dim 1), nên cần permute từ \texttt{[B, K, D]}
+sang \texttt{[B, D, K]}, rồi permute ngược lại.
+
+\textbf{Hàm ý thực tế:} BN tính thống kê trên chiều $K$ (tức là trên tất cả
+$K=300$ token trong cùng một sample). Điều này khác BN trên batch ($B$) --
+batch BN ở đây thực ra là \emph{feature normalization theo không gian token}.
+\end{insightbox}
+
+\subsection{EncoderLayer: Attention + DropPath}
+
+\begin{mathbox}[title={EncoderLayer forward pass đầy đủ}]
+\textbf{Self-Attention với DropPath:}
+\begin{align}
+  Q, K, V &= W_q X_\text{norm},\; W_k X_\text{norm},\; W_v X_\text{norm} \\
+  A &= \text{FlashAttn}(Q, K, V;\; \text{dropout}=p_\text{attn}) \\
+  A &= W_\text{out} A \\
+  X &\leftarrow X + \text{SD}(A;\; p_l) \label{eq:enc_attn}
+\end{align}
+
+\textbf{FFN với DropPath:}
+\begin{align}
+  F &= \text{GatedFFN}(\text{LN}(X)) \\
+  X &\leftarrow X + \text{SD}(F;\; p_l) \label{eq:enc_ffn}
+\end{align}
+
+\textbf{Flash Attention} (PyTorch 2.0+):
+\begin{equation}
+  \text{FlashAttn}(Q, K, V) = \text{softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}}\right) V
+  \quad \text{(IO-aware implementation)}
+\end{equation}
+\end{mathbox}
+
+\begin{issuebox}
+\textbf{DropPath áp dụng hai lần cùng giá trị:} Trong forward của EncoderLayer,
+cùng một \texttt{self.drop\_path} được gọi cho cả attention và FFN output.
+Vì \texttt{torch.rand(1)} được gọi riêng trong mỗi lần forward của StochasticDepth,
+hai lần drop là \textbf{độc lập} -- đây là thiết kế đúng.
+
+Tuy nhiên, nếu \texttt{drop\_path\_rate = 0.0}, code trả về \texttt{nn.Identity()}
+không phải \texttt{StochasticDepth(0.0)} -- điều này tránh overhead của một
+module gọi không cần thiết. Thiết kế tốt.
+\end{issuebox}
+
+\subsection{MultiViewReadout}
+
+\begin{codebox}[title={local\_module.py -- MultiViewReadout.forward()}]
+\begin{lstlisting}
+node_tensor     = output[:, 0, :]        # [B, D] seed node
+neighbor_tensor = output[:, 1:, :]       # [B, K-1, D]
+
+# View 1: attention-weighted
+target      = node_tensor.unsqueeze(1).expand_as(neighbor_tensor)
+attn_scores = self.attn_layer(torch.cat([target, neighbor_tensor], dim=-1))
+attn_weights = F.softmax(attn_scores, dim=1)    # softmax over K-1 neighbors
+v_attn = (neighbor_tensor * attn_weights).sum(dim=1)   # [B, D]
+
+# View 2, 3
+v_mean = neighbor_tensor.mean(dim=1)             # [B, D]
+v_max  = neighbor_tensor.max(dim=1)[0]           # [B, D]
+
+combined = torch.cat([v_attn, v_mean, v_max], dim=-1)  # [B, 3D]
+fused    = self.combine(combined)                        # [B, D]
+return self.layer_norm(node_tensor + fused)              # residual
+\end{lstlisting}
+\end{codebox}
+
+\begin{mathbox}[title={Công thức Multi-View Readout}]
+\textbf{View 1 -- Attention seed-to-neighbor:}
+\begin{equation}
+  \alpha_j = \frac{\exp(w^\top [h_0 \| h_j])}{\sum_{k=1}^{K-1} \exp(w^\top [h_0 \| h_k])},
+  \quad v_\text{attn} = \sum_{j=1}^{K-1} \alpha_j h_j
+  \label{eq:mvr_attn}
+\end{equation}
+
+\textbf{View 2, 3 -- Aggregation:}
+\begin{equation}
+  v_\text{mean} = \frac{1}{K-1}\sum_{j=1}^{K-1} h_j, \qquad
+  v_\text{max}  = \max_{j=1}^{K-1} h_j
+  \label{eq:mvr_pool}
+\end{equation}
+
+\textbf{Combine với residual:}
+\begin{equation}
+  \boxed{h_\text{local}(v_0) = \text{LN}\!\left(
+    h_0 + \text{MLP}\!\left([v_\text{attn} \| v_\text{mean} \| v_\text{max}]\right)
+  \right)}
+  \label{eq:mvr_out}
+\end{equation}
+\end{mathbox}
+
+\begin{insightbox}
+\textbf{Ba góc nhìn bổ sung cho nhau:}
+\begin{itemize}[nosep]
+  \item $v_\text{attn}$: ``Lân cận nào quan trọng với seed node?'' -- context-aware
+  \item $v_\text{mean}$: ``Đặc trưng trung bình của toàn bộ vùng lân cận'' -- global stats
+  \item $v_\text{max}$: ``Tính chất nổi bật nhất trong vùng lân cận'' -- salient feature
+\end{itemize}
+MLP$(3d \to 2d \to d)$ học cách kết hợp ba góc nhìn này một cách tối ưu.
+\end{insightbox}
+
+% ======================================================================
+\section{Module 4: GumbelSoftCodebook (codebook.py)}
+% ======================================================================
+
+\subsection{Vấn đề Codebook Collapse}
+
+Trong VQ-EMA gốc, cập nhật codebook dùng EMA:
+\begin{equation}
+  e_b \leftarrow \frac{\sum_{v:\,c_v=b} q_v}{\sum_{v:\,c_v=b} 1}
+\end{equation}
+Nếu centroid $b$ không được sử dụng trong nhiều batch, $N_b \to 0$ và
+$e_b$ không được cập nhật -- dẫn đến collapse.
+
+\subsection{Cơ chế Gumbel-Softmax}
+
+\begin{codebox}[title={codebook.py -- GumbelSoftCodebook.update()}]
+\begin{lstlisting}
+distances = (x_norm.pow(2).sum(1,keepdim=True)
+             - 2 * x_norm @ self.embedding_k.t()
+             + self.embedding_k.pow(2).sum(1).unsqueeze(0))
+logits = -distances
+
+if self.training:
+    gumbels = -torch.log(-torch.log(torch.rand_like(logits) + 1e-20) + 1e-20)
+    noisy_logits = (logits + gumbels) / self.temperature.clamp(min=0.1)
+    soft_probs   = F.softmax(noisy_logits, dim=-1)
+    hard_indices = soft_probs.argmax(dim=-1)       # straight-through
+    
+    # EMA usage tracking
+    counts = torch.bincount(hard_indices, minlength=self._num_embeddings).float()
+    counts = counts / (counts.sum() + 1e-8)
+    self._ema_usage.mul_(0.99).add_(counts * 0.01)
+    
+    # Temperature annealing
+    new_temp = max(self.temperature.item() * (1 - self.anneal_rate), self.min_temp)
+    self.temperature.fill_(new_temp)
+\end{lstlisting}
+\end{codebox}
+
+\begin{mathbox}[title={Công thức GumbelSoftCodebook đầy đủ}]
+\textbf{Distance-based logits:}
+\begin{equation}
+  l_{v,b} = -\|q_v - e_b\|_2^2
+    = -\|q_v\|^2 + 2\langle q_v, e_b\rangle - \|e_b\|^2
+  \label{eq:gsb_logit}
+\end{equation}
+
+\textbf{Gumbel noise:}
+\begin{equation}
+  g_{v,b} \sim \text{Gumbel}(0,1) = -\log(-\log U_{v,b}),\quad U_{v,b} \sim \text{Uniform}(0,1)
+\end{equation}
+
+\textbf{Soft assignment:}
+\begin{equation}
+  s_{v,b} = \frac{\exp\bigl((l_{v,b} + g_{v,b})/\tau\bigr)}
+    {\sum_{b'}\exp\bigl((l_{v,b'} + g_{v,b'})/\tau\bigr)}
+  \label{eq:gsb_soft}
+\end{equation}
+
+\textbf{Hard assignment (straight-through):}
+\begin{equation}
+  c_v = \arg\max_b s_{v,b}
+  \label{eq:gsb_hard}
+\end{equation}
+
+\textbf{Temperature annealing:}
+\begin{equation}
+  \tau^{(t+1)} = \max\!\bigl(\tau^{(t)} \cdot (1 - r_\text{anneal}),\; \tau_\text{min}\bigr)
+  \quad (r_\text{anneal}=3\times10^{-4},\; \tau_\text{min}=0.5)
+  \label{eq:gsb_anneal}
+\end{equation}
+
+\textbf{EMA usage tracking:}
+\begin{equation}
+  \hat{p}_b^{(t)} = 0.99 \cdot \hat{p}_b^{(t-1)} + 0.01 \cdot \frac{\#\{v: c_v=b\}}{|\text{batch}|}
+  \label{eq:gsb_ema}
+\end{equation}
+\end{mathbox}
+
+\subsection{Entropy Loss}
+
+\begin{codebox}[title={codebook.py -- codebook\_entropy\_loss()}]
+\begin{lstlisting}
+def codebook_entropy_loss(self):
+    p = self._ema_usage / (self._ema_usage.sum() + 1e-8)
+    entropy = -(p * torch.log(p + 1e-8)).sum()
+    max_entropy = math.log(self._num_embeddings)
+    return 1.0 - (entropy / max_entropy)   # 0 = uniform, 1 = collapsed
+\end{lstlisting}
+\end{codebox}
+
+\begin{mathbox}[title={Normalized Entropy Loss}]
+\begin{equation}
+  H(\hat{p}) = -\sum_{b=1}^B \hat{p}_b \log \hat{p}_b
+  \in [0,\, \log B]
+\end{equation}
+\begin{equation}
+  \mathcal{L}_\text{entropy} = 1 - \frac{H(\hat{p})}{\log B}
+  \in [0, 1]
+  \label{eq:entropy_loss}
+\end{equation}
+Giá trị 0 khi phân phối đều hoàn toàn ($\hat{p}_b = 1/B$ với mọi $b$),
+giá trị 1 khi suy sụp hoàn toàn (một centroid nhận toàn bộ token).
+\end{mathbox}
+
+\begin{insightbox}
+\textbf{Gradient flow:} Với \texttt{nn.Parameter}, cả \texttt{embedding\_k}
+và \texttt{embedding\_v} nhận gradient từ attention output qua công thức:
+\begin{equation}
+  \frac{\partial \mathcal{L}}{\partial e_b} =
+    \frac{\partial \mathcal{L}}{\partial h_\text{global}} \cdot
+    \frac{\partial h_\text{global}}{\partial v_x} \cdot
+    W_\text{value}^\top \cdot \mathbf{1}[c_v = b]
+\end{equation}
+Điều này khác VQ-EMA gốc: codebook học qua gradient descent
+\emph{cộng thêm} EMA usage tracking cho entropy loss.
+Hai cơ chế bổ sung cho nhau: gradient cập nhật hướng của codebook,
+EMA tracking cập nhật trọng số sử dụng.
+\end{insightbox}
+
+% ======================================================================
+\section{Module 5: GlobalModule với Centroid Attention}
+% ======================================================================
+
+\subsection{Kiến trúc và Công thức}
+
+\begin{codebox}[title={model.py -- RelGTLayer.global\_forward() (rút gọn)}]
+\begin{lstlisting}
+def global_forward(self, x, batch_idx):
+    q_x = self.lin_proj_g(x)             # [B, global_dim]
+    k_x = self.vq.get_k()                # [B_centroids, global_dim]
+    v_x = self.vq.get_v()                # [B_centroids, global_dim]
+    
+    q = self.lin_query_g(q_x)            # [B, h*d_h]
+    k = self.lin_key_g(k_x)              # [B_c, h*d_h]
+    v = self.lin_value_g(v_x)            # [B_c, h*d_h]
+    
+    q,k,v = rearrange to [h, n, d_h]
+    dots = einsum("h i d, h j d -> h i j", q, k) * scale
+    
+    # Popularity bias
+    dots = dots + log(centroid_count)    # [1, 1, B_c]
+    attn = softmax(dots, dim=-1)
+    out  = einsum("h i j, h j d -> h i d", attn, v)
+    out  = rearrange to [B, h*d_h]
+\end{lstlisting}
+\end{codebox}
+
+\begin{mathbox}[title={Công thức Global Attention với Popularity Bias}]
+\textbf{Multi-head attention đến centroids:}
+\begin{equation}
+  \text{dots}_{h,i,b} =
+    \frac{\langle W_q^h q_i,\; W_k^h e_b \rangle}{\sqrt{d_h}}
+    + \underbrace{\log N_b}_{\text{popularity bias}}
+  \label{eq:global_attn}
+\end{equation}
+với $N_b = \#\{v \in \text{toàn bộ dataset}: c_v = b\}$ (đếm tích lũy).
+
+\textbf{Output:}
+\begin{equation}
+  h_\text{global}(v_i) = \bigoplus_{h=1}^H
+    \sum_{b=1}^B \text{softmax}_b(\text{dots}_{h,i,:})\cdot W_v^h e_b
+  \label{eq:global_out}
+\end{equation}
+
+\textbf{Cập nhật chỉ số centroid:}
+\begin{equation}
+  \mathbf{c}[\texttt{batch\_idx}] \leftarrow \arg\min_b \|q_v - e_b\|_2
+  \quad (\text{được thực hiện bởi \texttt{vq.update(q\_x)}})
+\end{equation}
+\end{mathbox}
+
+\begin{observation}
+\textbf{c\_idx là global buffer $\in \mathbb{R}^{N_\text{nodes}}$:}
+Buffer \texttt{c\_idx} được cập nhật mỗi training step:
+\begin{center}
+\texttt{self.c\_idx[batch\_idx] = x\_idx.squeeze().to(torch.long)}
+\end{center}
+Điều này tạo ra ``bộ nhớ dài hạn'' về việc node nào thuộc centroid nào.
+Trong môi trường DDP với nhiều GPU, buffer này \textbf{không được đồng bộ}
+qua \texttt{dist.broadcast} trong code hiện tại -- mỗi GPU có phiên bản
+riêng của \texttt{c\_idx}, có thể dẫn đến inconsistency.
+\end{observation}
+
+% ======================================================================
+\section{Module 6: CrossAttentionBridge (model.py)}
+% ======================================================================
+
+\subsection{Công thức Bidirectional Cross-Attention}
+
+\begin{mathbox}[title={CrossAttentionBridge -- Công thức đầy đủ}]
+Đầu vào: $h_l \in \mathbb{R}^{B \times d}$ (local), $h_g \in \mathbb{R}^{B \times d}$ (global).
+
+\textbf{Local $\to$ Global attention:}
+\begin{align}
+  \alpha &= \sigma\!\left(\frac{(W_q^l h_l) \cdot (W_k^g h_g)}{\sqrt{d}}\right) \in (0,1)^B \\
+  \tilde{h}_l &= h_l + \alpha \odot W_v^g h_g
+  \label{eq:cab_l2g}
+\end{align}
+
+\textbf{Global $\to$ Local attention:}
+\begin{align}
+  \beta &= \sigma\!\left(\frac{(W_q^g h_g) \cdot (W_k^l h_l)}{\sqrt{d}}\right) \\
+  \tilde{h}_g &= h_g + \beta \odot W_v^l h_l
+  \label{eq:cab_g2l}
+\end{align}
+
+\textbf{Gated merge:}
+\begin{align}
+  \gamma &= \sigma\!\left(W_\text{gate}[\tilde{h}_l \| \tilde{h}_g]\right) \in (0,1)^{B \times d} \\
+  m &= \gamma \odot \tilde{h}_l + (1-\gamma) \odot \tilde{h}_g
+\end{align}
+
+\textbf{Output với residual:}
+\begin{equation}
+  \boxed{h_\text{bridge} = \text{LN}\!\left(W_\text{out}\, \text{Dropout}(m) + h_l\right)}
+  \label{eq:cab_out}
+\end{equation}
+\end{mathbox}
+
+\begin{issuebox}
+\textbf{Dot product đơn chiều (single-head):} Attention được tính bằng
+dot product vô hướng $\langle q, k \rangle \in \mathbb{R}^B$ thay vì
+multi-head attention. Điều này \emph{significantly} hạn chế khả năng
+mô hình hóa tương tác phức tạp giữa local và global:
+\begin{equation}
+  \alpha = \sigma\!\left(\frac{1}{d}\sum_{i=1}^d q_i k_i\right)
+  \quad \text{-- chỉ học một ``hướng tương tác''}
+\end{equation}
+So sánh với multi-head ($H$ heads):
+\begin{equation}
+  \alpha_h = \text{softmax}\!\left(\frac{Q_h K_h^\top}{\sqrt{d_h}}\right)
+  \quad \text{-- học $H$ hướng tương tác độc lập}
+\end{equation}
+\end{issuebox}
+
+% ======================================================================
+\section{Hàm Mất mát và Auxiliary Losses}
+% ======================================================================
+
+\subsection{Tổng hợp Loss trong Training}
+
+\begin{codebox}[title={main\_node\_ddp.py -- training loop (rút gọn)}]
+\begin{lstlisting}
+pred = model(...)
+pred = pred.view(-1) if pred.size(1) == 1 else pred
+loss = loss_fn(pred.float(), labels)    # ONLY task loss!
+loss.backward()
+\end{lstlisting}
+\end{codebox}
+
+\begin{issuebox}
+\textbf{Auxiliary losses KHÔNG được sử dụng trong training!}
+
+Mặc dù \texttt{model.get\_aux\_loss()} được định nghĩa và các
+\texttt{\_aux\_losses} được thu thập sau mỗi forward pass (codebook entropy,
+local-global agreement), chúng \textbf{không được cộng vào hàm mất mát}
+trong \texttt{main\_node\_ddp.py}.
+
+Tổng loss thực tế chỉ là:
+\begin{equation}
+  \mathcal{L}_\text{actual} = \mathcal{L}_\text{task}
+  \quad \text{(chỉ task loss!)}
+\end{equation}
+
+Trong khi thiết kế dự kiến:
+\begin{equation}
+  \mathcal{L}_\text{intended} = \mathcal{L}_\text{task}
+    + \lambda_1 \mathcal{L}_\text{entropy}
+    + \lambda_2 \mathcal{L}_\text{local\text{-}global}
+\end{equation}
+\textbf{Đây là bug quan trọng} -- toàn bộ cơ chế entropy regularization
+và local-global agreement không có tác dụng.
+\end{issuebox}
+
+\subsection{Local-Global Agreement Loss}
+
+\begin{codebox}[title={model.py -- RelGTLayer.forward() -- full mode}]
+\begin{lstlisting}
+with torch.no_grad():
+    cos_sim = F.cosine_similarity(out_local, out_global, dim=-1).mean()
+self._aux_losses['local_global_agreement'] = (1.0 - cos_sim) * 0.01
+\end{lstlisting}
+\end{codebox}
+
+\begin{mathbox}[title={Công thức}]
+\begin{equation}
+  \mathcal{L}_\text{agree} = 0.01 \times \left(1 - \frac{1}{B}\sum_{i=1}^B
+    \frac{h_l^{(i)} \cdot h_g^{(i)}}{\|h_l^{(i)}\|\|h_g^{(i)}\|}\right)
+\end{equation}
+\end{mathbox}
+
+\begin{insightbox}
+\textbf{Dùng \texttt{torch.no\_grad()}}:  Loss này được tính với gradient bị
+chặn từ phía cosine similarity (chỉ dùng để tracking/monitoring), không thực
+sự ảnh hưởng đến tham số. Ngay cả nếu được cộng vào total loss, gradient
+sẽ bằng 0 (do no\_grad wrapper). Đây có thể là lỗi thiết kế -- nếu muốn
+alignment loss thực sự hoạt động, cần bỏ \texttt{no\_grad}.
+\end{insightbox}
+
+% ======================================================================
+\section{Phân tích Hệ thống Lấy mẫu Dữ liệu (utils.py)}
+% ======================================================================
+
+\subsection{Chiến lược 2-hop với Temporal Constraint}
+
+\begin{mathbox}[title={Bất đẳng thức thời gian trong lấy mẫu}]
+\textbf{1-hop filter:}
+\begin{equation}
+  \mathcal{N}_1(v_i) = \{v_j \in \mathcal{N}_{1\text{-hop}}(v_i) : \tau(v_j) \le \tau(v_i)\}
+\end{equation}
+
+\textbf{2-hop filter:}
+\begin{equation}
+  \mathcal{N}_2(v_i) = \{v_k \in \mathcal{N}_{2\text{-hop}}(v_i)
+    \setminus \mathcal{N}_1(v_i) : \tau(v_k) \le \tau(v_i)\}
+\end{equation}
+
+\textbf{Quyết định lấy mẫu:}
+\begin{equation}
+  \text{Neighbors} = \begin{cases}
+    \text{Random sample}(\mathcal{N}_1 \cup \mathcal{N}_2,\; K-1)
+      & \text{nếu } |\mathcal{N}| \ge K-1 \\
+    \text{Random choice with replacement}(\mathcal{N},\; K-1)
+      & \text{nếu } 0 < |\mathcal{N}| < K-1 \\
+    \text{Global fallback sample}(\mathcal{V},\; K-1)
+      & \text{nếu } |\mathcal{N}| = 0
+  \end{cases}
+\end{equation}
+\end{mathbox}
+
+\subsection{HDF5 Precomputation Pipeline}
+
+\begin{table}[H]
+\centering\small
+\caption{Format lưu trữ HDF5 và kích thước dữ liệu}
+\begin{tabular}{llll}
+\toprule
+\textbf{Dataset} & \textbf{Dtype} & \textbf{Shape} & \textbf{Nội dung} \\
+\midrule
+\texttt{types} & int16 & $[N, K]$ & Loại node cho mỗi token \\
+\texttt{indices} & int32 & $[N, K]$ & Chỉ số local của node \\
+\texttt{hops} & int8 & $[N, K]$ & Khoảng cách hop \\
+\texttt{times} & float32 & $[N, K]$ & Thời gian tương đối (ngày) \\
+\texttt{edges} & int16 & $[2, E_\text{total}]$ & Cạnh đồ thị con \\
+\texttt{edges\_offsets} & uint64 & $[N+1]$ & Offset CSR cho edges \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{issuebox}
+\textbf{int16 cho edge index có thể gây tràn số:} \texttt{edges} được lưu
+với dtype \texttt{int16}, có giá trị tối đa $2^{15}-1 = 32767$. Nhưng
+$K = 300$ node/subgraph, vậy edge index từ 0 đến 299 -- không tràn số.
+Tuy nhiên, nếu $K > 32767$ trong tương lai, đây sẽ là vấn đề.
+
+Hơn nữa, trong \texttt{main\_node\_ddp.py} khi load:
+\begin{center}
+\texttt{batch["node\_indices"].to(device)}
+\end{center}
+Tensor int16 cần cast sang int64 trước khi dùng làm index. Code xử lý
+điều này đúng với \texttt{.to(torch.int64)} ở đầu training loop.
+\end{issuebox}
+
+% ======================================================================
+\section{Phân tích DDP và Training (main\_node\_ddp.py)}
+% ======================================================================
+
+\subsection{Gradient Clipping và Optimizer}
+
+\begin{mathbox}[title={Cấu hình tối ưu hóa}]
+\textbf{Optimizer:} Adam với learning rate scaling tuyến tính theo world size:
+\begin{equation}
+  \text{lr}_\text{eff} = \text{lr}_\text{base} \times |\mathcal{W}|,
+  \quad \text{lr}_\text{base} = 10^{-4}
+\end{equation}
+
+\textbf{Gradient clipping:}
+\begin{equation}
+  \nabla \leftarrow \nabla \cdot \min\!\left(1,\; \frac{1}{\|\nabla\|_2}\right)
+  \quad (\texttt{max\_norm} = 1.0)
+\end{equation}
+
+\textbf{Weight decay:} $\lambda = 10^{-5}$ (L2 regularization).
+\end{mathbox}
+
+\subsection{Evaluation Gathering trong DDP}
+
+\begin{mathbox}[title={Phương pháp gather kết quả phân tán}]
+Mỗi rank $r$ tính predictions trên phần dữ liệu của mình:
+$\{(\text{idx}_i, \hat{y}_i)\}_{i \in S_r}$.
+
+Rank 0 gather tất cả:
+\begin{equation}
+  \text{all\_preds} = \bigoplus_{r=0}^{|\mathcal{W}|-1}
+    \{(\text{idx}_i, \hat{y}_i)\}_{i \in S_r}
+\end{equation}
+\begin{equation}
+  \text{final\_preds}[\text{idx}] = \hat{y}_{\text{idx}}
+  \quad \forall \text{idx} \in [0, N_\text{split})
+\end{equation}
+\end{mathbox}
+
+% ======================================================================
+\section{Tổng hợp: Ma trận Điểm mạnh / Điểm yếu}
+% ======================================================================
+
+\begin{table}[H]
+\centering\small
+\renewcommand{\arraystretch}{1.3}
+\caption{Đánh giá toàn diện từng module của RelGT++}
+\begin{tabularx}{\textwidth}{lXXc}
+\toprule
+\textbf{Module} & \textbf{Điểm mạnh} & \textbf{Điểm yếu / Vấn đề} & \textbf{Mức độ} \\
+\midrule
+TypeEncoder & Đơn giản, hiệu quả, tương đương toán học với paper & Không có & ✓✓✓ \\
+HopEncoder & Dịch chuyển $+1$ xử lý đúng padding & Chỉ 3 giá trị hop, không học được & ✓✓ \\
+TimeEncoder & Xử lý token không có thời gian qua mask vector & PE dùng sin/cos theo giây -- chu kỳ có thể không phù hợp & ✓✓ \\
+TfsEncoder & Grouping-encode-scatter rất hiệu quả ($10^4\times$ speedup) & NaN clip tới $10^6$ có thể gây gradient bùng nổ & ✓✓✓ \\
+GNNPEEncoder & Stochastic init tăng expressiveness & Variance cao inference, GIN dim $d/4$ & ✓✓ \\
+CrossModalFusion & Gate per-modality thích nghi với context & Dead modality problem, $4$M tham số & ✓✓✓ \\
+EncoderLayer & Flash attn, DropPath đúng, xavier init & DropPath toàn batch không phải per-sample & ✓✓✓ \\
+GatedFFN (SwiGLU) & Gradient flow tốt, expansion $4\times$ & BN trên token dim -- ít ổn định hơn LN & ✓✓✓ \\
+MultiViewReadout & Ba góc nhìn bổ sung, residual với seed & -- & ✓✓✓ \\
+GumbelSoftCodebook & Gumbel exploration, temperature annealing, gradient flow & Temperature giảm không dựa trên metric thực, EMA decoupled từ gradient & ✓✓✓ \\
+CrossAttnBridge & Bidirectional, gated merge có lý thuyết & Attention đơn chiều (dot-product vô hướng), no\_grad trong agreement loss & ✓✓ \\
+GlobalAttn & Popularity bias tốt cho cân bằng centroid & c\_idx không sync trong DDP & ✓✓ \\
+Training loop & Gradient clip, SyncBN, gather distributed eval & Auxiliary losses không được dùng (bug!) & ✓ \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Top 3 Vấn đề Ưu tiên Sửa}
+
+\begin{enumerate}
+  \item \textbf{[Quan trọng nhất]} Auxiliary losses không được cộng vào loss:
+        Sửa bằng cách thêm \texttt{loss = loss + model.module.get\_aux\_loss()}
+        sau dòng \texttt{loss = loss\_fn(...)} trong training loop.
+  \item \textbf{[Quan trọng]} Agreement loss tính với \texttt{no\_grad}:
+        Bỏ wrapper \texttt{with torch.no\_grad()} trong
+        \texttt{RelGTLayer.forward()} khi tính cosine similarity.
+  \item \textbf{[Trung bình]} c\_idx không sync qua DDP:
+        Thêm \texttt{dist.all\_reduce(self.c\_idx, op=dist.ReduceOp.SUM)}
+        (hoặc dùng \texttt{all\_gather}) sau mỗi batch update trong global forward.
+\end{enumerate}
+
+% ======================================================================
+\section{Kết luận}
+% ======================================================================
+
+RelGT++ là một triển khai kỹ thuật công phu với nhiều cải tiến thực sự
+so với RelGT gốc. Đặc biệt, sự kết hợp của GumbelSoftCodebook (gradient
+flow qua codebook), GatedFFN (SwiGLU activation), CrossModalGatedFusion
+(per-modality adaptive weighting), và MultiViewReadout (3 aggregation views)
+tạo ra một kiến trúc biểu cảm cao.
+
+Tuy nhiên, phân tích từ mã nguồn phát hiện \textbf{ba vấn đề kỹ thuật
+quan trọng}: auxiliary losses không được kích hoạt, agreement loss bị
+chặn gradient, và codebook index không đồng bộ trong môi trường phân tán.
+Sửa ba vấn đề này (ước tính $\sim$5 dòng code) có thể cải thiện đáng kể
+hiệu suất huấn luyện mà không cần thay đổi kiến trúc.
+
+\begin{thebibliography}{9}
+\bibitem{relgt25}
+Dwivedi et al. (2025). \textit{Relational Graph Transformer}. arXiv:2505.10960.
+\bibitem{swiglu20}
+Shazeer, N. (2020). \textit{GLU Variants Improve Transformer}. arXiv:2002.05202.
+\bibitem{stodepth20}
+Huang, G. et al. (2016). \textit{Deep Networks with Stochastic Depth}. ECCV.
+\bibitem{gumbel17}
+Jang, E. et al. (2017). \textit{Categorical Reparameterization with Gumbel-Softmax}. ICLR.
+\bibitem{gin19}
+Xu, K. et al. (2019). \textit{How Powerful are Graph Neural Networks?}. ICLR.
+\bibitem{pytorchframe}
+Hu, W. et al. (2024). \textit{PyTorch Frame}. arXiv:2404.00776.
+\end{thebibliography}
+
+\end{document}

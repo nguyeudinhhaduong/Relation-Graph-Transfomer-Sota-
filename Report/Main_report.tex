@@ -1,0 +1,1168 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage{fontspec}
+\usepackage{polyglossia}
+\setmainlanguage{vietnamese}
+\setmainfont{DejaVu Serif}
+\setsansfont{DejaVu Sans}
+\setmonofont[Scale=0.86]{DejaVu Sans Mono}
+
+\usepackage{amsmath,amssymb,amsthm,mathtools,bm}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs,array,multirow,tabularx,longtable}
+\usepackage{xcolor}
+\usepackage[colorlinks=true,linkcolor=blue!65!black,citecolor=green!45!black,urlcolor=blue!70!black]{hyperref}
+\usepackage{enumitem}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,shapes.geometric,calc,fit,backgrounds}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{float}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{tcolorbox}
+\usepackage{microtype}
+
+\geometry{top=2.45cm,bottom=2.45cm,left=3cm,right=2.45cm}
+\setlist[itemize]{topsep=3pt,itemsep=2pt,leftmargin=1.4em}
+\setlist[enumerate]{topsep=3pt,itemsep=2pt,leftmargin=1.5em}
+\renewcommand{\arraystretch}{1.18}
+
+\definecolor{mainblue}{HTML}{0A3D62}
+\definecolor{softblue}{HTML}{EAF2F8}
+\definecolor{deepgreen}{HTML}{1E8449}
+\definecolor{warnorange}{HTML}{B9770E}
+\definecolor{darkred}{HTML}{922B21}
+\definecolor{softgray}{HTML}{F4F6F7}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\textcolor{gray!75}{\small Báo cáo RELGT}}
+\rhead{\textcolor{gray!75}{\small RELGT -- RELGT++ -- RELGT-X}}
+\cfoot{\thepage}
+\renewcommand{\headrulewidth}{0.35pt}
+
+\titleformat{\section}{\Large\bfseries\color{mainblue}}{\thesection}{0.75em}{}[\color{mainblue!35}\titlerule]
+\titleformat{\subsection}{\large\bfseries\color{mainblue!85!black}}{\thesubsection}{0.65em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries\color{black!80}}{\thesubsubsection}{0.55em}{}
+
+\newtheorem{definition}{Định nghĩa}[section]
+\newtheorem{proposition}{Mệnh đề}[section]
+\newtheorem{remark}{Nhận xét}[section]
+
+\tcbuselibrary{skins,breakable}
+\newtcolorbox{summarybox}[1][]{
+  enhanced,breakable,
+  colback=softblue,
+  colframe=mainblue!65!black,
+  fonttitle=\bfseries,
+  title=#1
+}
+\newtcolorbox{insightbox}[1][]{
+  enhanced,breakable,
+  colback=green!4!white,
+  colframe=deepgreen!70!black,
+  fonttitle=\bfseries,
+  title=#1
+}
+\newtcolorbox{warnbox}[1][]{
+  enhanced,breakable,
+  colback=orange!5!white,
+  colframe=warnorange!80!black,
+  fonttitle=\bfseries,
+  title=#1
+}
+\newtcolorbox{mathbox}[1][]{
+  enhanced,breakable,
+  colback=gray!4!white,
+  colframe=gray!55!black,
+  fonttitle=\bfseries,
+  title=#1
+}
+
+\newcommand{\RelGT}{\textsc{RelGT}}
+\newcommand{\RelGTpp}{\textsc{RelGT++}}
+\newcommand{\RelGTx}{\textsc{RelGT-X}}
+\newcommand{\RDL}{\textsc{RDL}}
+\newcommand{\REG}{\textsc{REG}}
+\newcommand{\concat}{\mathbin{\Vert}}
+
+\begin{document}
+
+% ============================================================
+% Trang bìa
+% ============================================================
+\begin{titlepage}
+\centering
+\vspace*{0.7cm}
+
+{\small\scshape\color{gray!75} Báo cáo tổng hợp và phân tích kỹ thuật}\\[0.8em]
+\rule{\textwidth}{2.4pt}\\[0.7em]
+{\Huge\bfseries\color{mainblue} RELGT}\\[0.35em]
+{\LARGE\bfseries Relational Graph Transformer}\\[0.45em]
+{\Large\color{black!70} Từ \RelGT{} gốc đến \RelGTpp{} và đề xuất \RelGTx}\\[0.7em]
+\rule{\textwidth}{1pt}\\[1.2em]
+
+\begin{tcolorbox}[colback=softgray,colframe=gray!45,width=0.93\textwidth]
+\centering
+\textbf{Phạm vi báo cáo}\\[0.3em]
+Phân tích chi tiết paper \RelGT{}, giải thích kiến trúc \RelGT{} gốc,
+tổng hợp các cải tiến trong \RelGTpp{}, và trình bày định hướng mở rộng
+\RelGTx{} cho dữ liệu quan hệ đa bảng có thời gian.
+\end{tcolorbox}
+
+\vspace{1.3em}
+\begin{tabular}{ll}
+\toprule
+\textbf{Chủ đề} & Graph Transformer cho Relational Deep Learning \\
+\textbf{Nguồn chính} & \texttt{relgt\_report\_vi.tex}, \texttt{relgtpp\_plusplus.tex}, \texttt{relgtx\_x.tex} \\
+\textbf{Bài báo gốc} & Dwivedi et al., \textit{Relational Graph Transformer}, arXiv:2505.10960 \\
+\textbf{Benchmark} & RelBench, 21 tác vụ trên cơ sở dữ liệu quan hệ \\
+\textbf{Ngày lập báo cáo} & \today \\
+\bottomrule
+\end{tabular}
+
+\vfill
+\begin{tikzpicture}[
+  box/.style={draw,rounded corners=5pt,minimum width=3.2cm,minimum height=1.05cm,
+              align=center,font=\small\bfseries},
+  arrow/.style={-Stealth,thick,mainblue}
+]
+\node[box,fill=blue!8,draw=mainblue] (a) {\RelGT\\Token hóa 5 phần};
+\node[box,fill=green!8,draw=deepgreen,right=1.3cm of a] (b) {\RelGTpp\\Gated Fusion + Codebook};
+\node[box,fill=orange!10,draw=warnorange,right=1.3cm of b] (c) {\RelGTx\\Schema + Causal + Meta};
+\draw[arrow] (a) -- (b);
+\draw[arrow] (b) -- (c);
+\end{tikzpicture}
+
+\vspace*{0.5cm}
+\end{titlepage}
+
+% ============================================================
+% Trang mục lục
+% ============================================================
+\renewcommand{\contentsname}{Mục lục}
+\clearpage
+\thispagestyle{plain}
+\tableofcontents
+\clearpage
+
+% ============================================================
+\section{Giới thiệu}
+% ============================================================
+
+\begin{summarybox}[Ý tưởng và paper gốc]
+\RelGT{} là kiến trúc Graph Transformer được thiết kế cho dữ liệu quan hệ
+đa bảng, được giới thiệu trong paper gốc \textit{Relational Graph Transformer}
+của Vijay Prakash Dwivedi, Sri Jaladi, Yangyi Shen, Federico López,
+Charilaos I. Kanatsoulis, Rishi Puri, Matthias Fey và Jure Leskovec
+(arXiv:2505.10960v1, 16/05/2025)~\cite{relgt2025}. Paper này đặt vấn đề rằng
+dữ liệu doanh nghiệp thực tế thường không tồn tại như một bảng đơn lẻ, mà là
+một hệ nhiều bảng, nhiều kiểu thực thể, nhiều quan hệ khóa chính--khóa ngoại
+và nhiều mốc thời gian. Vì vậy, mô hình cần học đồng thời đặc trưng bảng,
+cấu trúc quan hệ, ngữ nghĩa schema và động lực thời gian.
+
+Khác với GNN truyền thống, \RelGT{} biến mỗi node trong đồ thị quan hệ thành
+một token giàu ngữ cảnh gồm đặc trưng bảng, loại node, khoảng cách hop,
+thời gian tương đối và mã hóa vị trí cục bộ. Sau đó mô hình dùng attention
+cục bộ để học tương tác trong đồ thị con và attention toàn cục đến một tập
+centroid để thu nhận ngữ cảnh xa.
+\end{summarybox}
+
+Báo cáo này không chỉ tóm tắt paper gốc, mà còn mở rộng phân tích theo ba
+thế hệ kiến trúc:
+\begin{itemize}
+  \item \textbf{\RelGT{} gốc}: đóng góp nền tảng về token hóa 5 thành phần,
+        lấy mẫu nhận biết thời gian, local transformer và global centroid.
+  \item \textbf{\RelGTpp{}}: phiên bản triển khai/cải tiến, tăng tính ổn định
+        và biểu đạt bằng CrossModalGatedFusion, SwiGLU, DropPath,
+        Multi-View Readout, GumbelSoftCodebook và CrossAttentionBridge.
+  \item \textbf{\RelGTx{}}: hướng nghiên cứu kế tiếp, đưa schema prior,
+        temporal causal disentanglement, hierarchical codebook, relational
+        positional encoding, meta-learning tokenization và contrastive schema
+        alignment vào cùng một khung.
+\end{itemize}
+
+Nhìn tổng thể, \RelGT{} giải quyết một nút thắt rất thực tế: dữ liệu doanh
+nghiệp không nằm trong một ma trận duy nhất mà trong nhiều bảng, nhiều kiểu
+thực thể, nhiều quan hệ khóa chính--khóa ngoại và nhiều mốc thời gian. Bài
+toán không chỉ là học đặc trưng tabular, cũng không chỉ là học graph; nó là
+học trên một \emph{hệ quan hệ có cấu trúc, có thời gian và có ngữ nghĩa schema}.
+
+% ============================================================
+\section{Bối cảnh: Relational Deep Learning}
+% ============================================================
+
+\subsection{Dữ liệu quan hệ và giới hạn của cách tiếp cận cũ}
+
+Trong các hệ thống thương mại điện tử, tài chính, y tế, mạng xã hội hoặc
+vận hành doanh nghiệp, dữ liệu thường được lưu trong cơ sở dữ liệu quan hệ:
+bảng người dùng, bảng sản phẩm, bảng đơn hàng, bảng đánh giá, bảng sự kiện,
+bảng thanh toán, v.v. Các bảng này được nối bằng khóa chính và khóa ngoại.
+
+Cách làm truyền thống thường gồm ba bước: chọn bảng mục tiêu, join nhiều bảng
+liên quan, sinh đặc trưng thủ công, rồi huấn luyện một mô hình tabular như
+LightGBM hoặc mạng neural cho bảng phẳng. Cách làm đó có ba hạn chế lớn:
+\begin{enumerate}
+  \item \textbf{Tốn công thiết kế đặc trưng}: cần chuyên gia hiểu nghiệp vụ,
+        schema và cửa sổ thời gian.
+  \item \textbf{Mất cấu trúc quan hệ}: sau khi join/aggregate, nhiều đường đi
+        quan hệ trong schema bị nén thành thống kê đơn giản.
+  \item \textbf{Dễ rò rỉ thời gian}: nếu aggregation dùng dữ liệu sau thời điểm
+        dự báo, mô hình nhìn thấy tương lai.
+\end{enumerate}
+
+\RDL{} đề xuất học trực tiếp từ cơ sở dữ liệu quan hệ bằng cách chuyển nó
+thành đồ thị không đồng nhất có thời gian. Khi đó mỗi hàng trong bảng là một
+node, mỗi quan hệ khóa chính--khóa ngoại là edge, và mỗi bảng tương ứng với
+một loại node.
+
+\subsection{Relational Entity Graph}
+
+\begin{definition}[Relational Entity Graph]
+Một \REG{} được định nghĩa là:
+\[
+  \mathcal{G}=(\mathcal{V},\mathcal{E},\varphi,\psi,\tau),
+\]
+trong đó $\mathcal{V}$ là tập node/thực thể, $\mathcal{E}$ là tập cạnh quan hệ,
+$\varphi:\mathcal{V}\rightarrow\mathcal{T}$ ánh xạ node về loại bảng,
+$\psi:\mathcal{E}\rightarrow\mathcal{R}$ ánh xạ cạnh về loại quan hệ, và
+$\tau:\mathcal{V}\rightarrow\mathbb{R}$ là thời điểm của node hoặc sự kiện.
+\end{definition}
+
+\REG{} có ba đặc điểm quan trọng:
+\begin{itemize}
+  \item \textbf{Schema-defined}: edge không tùy ý mà do schema cơ sở dữ liệu
+        quy định.
+  \item \textbf{Temporal}: dự báo phải tôn trọng thứ tự thời gian, đặc biệt
+        trong các tác vụ như churn, fraud, sales forecasting.
+  \item \textbf{Heterogeneous}: mỗi bảng có miền đặc trưng, kiểu dữ liệu và
+        ý nghĩa nghiệp vụ riêng.
+\end{itemize}
+
+\subsection{Vì sao GNN truyền thống chưa đủ}
+
+GNN học bằng message passing: sau $L$ lớp, một node nhận thông tin từ vùng
+$L$-hop. Trên dữ liệu quan hệ, điều này có thể thiếu linh hoạt:
+\begin{itemize}
+  \item Phụ thuộc xa cần đi qua nhiều bảng trung gian nên dễ bị \emph{over-squashing}.
+  \item Hai thực thể cùng kiểu có thể liên quan qua schema nhưng không có cạnh
+        trực tiếp trong đồ thị con nhỏ.
+  \item Heterogeneity và temporal dynamics thường bị nhét vào cùng một vector,
+        làm mất ranh giới ngữ nghĩa giữa nội dung, kiểu node, thời gian và vị trí.
+\end{itemize}
+
+\begin{insightbox}[Trực giác]
+GNN truyền thống giỏi lan truyền tín hiệu theo cạnh. \RelGT{} đặt câu hỏi khác:
+nếu đã có một đồ thị con quanh seed node, ta có thể xem các node trong đó như
+một tập token và để Transformer học mọi tương tác quan trọng giữa chúng không?
+\end{insightbox}
+
+% ============================================================
+\section{\RelGT{} Gốc}
+% ============================================================
+
+\subsection{Tổng quan kiến trúc}
+
+\RelGT{} gồm ba bước chính:
+\[
+  \text{REG}
+  \xrightarrow{\text{lấy mẫu nhận biết thời gian}}
+  \text{đồ thị con quanh seed}
+  \xrightarrow{\text{token hóa 5 thành phần}}
+  \text{local + global Transformer}
+  \xrightarrow{}
+  \hat{y}.
+\]
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  node distance=0.9cm and 1.0cm,
+  box/.style={draw,rounded corners=5pt,minimum width=2.7cm,minimum height=0.8cm,
+              align=center,font=\small},
+  enc/.style={box,fill=blue!9,draw=mainblue},
+  mod/.style={box,fill=green!8,draw=deepgreen},
+  out/.style={box,fill=orange!10,draw=warnorange},
+  arr/.style={-Stealth,thick}
+]
+\node[enc] (db) {CSDL quan hệ\\đa bảng};
+\node[enc,right=of db] (reg) {\REG\\hetero-temporal};
+\node[enc,right=of reg] (sample) {Lấy mẫu\\2-hop};
+\node[mod,right=of sample] (token) {Token hóa\\5 thành phần};
+\node[mod,below right=0.6cm and 1.0cm of token] (local) {Local\\Transformer};
+\node[mod,above right=0.6cm and 1.0cm of token] (global) {Global\\Centroid};
+\node[out,right=2.3cm of token] (pred) {Dự đoán\\$\hat{y}$};
+\draw[arr] (db) -- (reg);
+\draw[arr] (reg) -- (sample);
+\draw[arr] (sample) -- (token);
+\draw[arr] (token) -- (local);
+\draw[arr] (token) -- (global);
+\draw[arr] (local) -- (pred);
+\draw[arr] (global) -- (pred);
+\end{tikzpicture}
+\caption{Pipeline khái quát của \RelGT{}.}
+\end{figure}
+
+\subsection{Lấy mẫu lân cận nhận biết thời gian}
+
+Với seed node $v_i$, \RelGT{} lấy $K-1$ node lân cận trong phạm vi 2-hop,
+nhưng chỉ giữ những node không xảy ra sau seed:
+\[
+  \mathcal{N}(v_i)=
+  \{v_j: d(v_i,v_j)\le 2,\; \tau(v_j)\le \tau(v_i)\}.
+\]
+Nếu số lân cận không đủ, mô hình dùng lấy mẫu có hoàn lại; nếu không có lân
+cận hợp lệ, mô hình dùng fallback token từ toàn đồ thị.
+
+\begin{mathbox}[Quy tắc lấy mẫu]
+\[
+  \mathcal{S}(v_i)=
+  \begin{cases}
+    \{v_i\}\cup \text{Sample}(\mathcal{N}(v_i),K-1),
+      & |\mathcal{N}(v_i)|\ge K-1,\\
+    \{v_i\}\cup \text{SampleWithReplacement}(\mathcal{N}(v_i),K-1),
+      & 0<|\mathcal{N}(v_i)|<K-1,\\
+    \{v_i\}\cup \text{FallbackSample}(\mathcal{V},K-1),
+      & |\mathcal{N}(v_i)|=0.
+  \end{cases}
+\]
+\end{mathbox}
+
+Ràng buộc $\tau(v_j)\le\tau(v_i)$ là yếu tố rất quan trọng. Nó biến quá trình
+lấy mẫu từ một thao tác graph thông thường thành một thao tác phù hợp cho
+dự báo theo thời gian.
+
+\subsection{Token hóa 5 thành phần}
+
+Mỗi token $t(v_j\mid v_i)$ trong ngữ cảnh seed $v_i$ được biểu diễn bằng:
+\[
+  t(v_j\mid v_i)=
+  \bigl(x_{v_j},\varphi(v_j),p(v_i,v_j),
+  \tau(v_j)-\tau(v_i),\text{GNN-PE}_{v_j}\bigr).
+\]
+
+\begin{table}[H]
+\centering
+\caption{Năm thành phần token trong \RelGT{}.}
+\begin{tabularx}{\textwidth}{clX}
+\toprule
+\textbf{\#} & \textbf{Thành phần} & \textbf{Vai trò} \\
+\midrule
+1 & Node feature $x_{v_j}$ & Nội dung bảng: số, phân loại, timestamp, văn bản/embedding. \\
+2 & Node type $\varphi(v_j)$ & Cho biết token đến từ bảng nào, giúp mô hình phân biệt ngữ nghĩa thực thể. \\
+3 & Hop distance $p(v_i,v_j)$ & Mô tả khoảng cách cấu trúc so với seed: 1-hop, 2-hop hoặc fallback. \\
+4 & Relative time $\Delta\tau$ & Giữ thông tin thứ tự và khoảng cách thời gian giữa token và seed. \\
+5 & Subgraph PE & Mã hóa vị trí cục bộ bằng GNN nhẹ trên đồ thị con. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Các thành phần được mã hóa riêng:
+\begin{align}
+  h_\text{feat}(v_j) &= \text{MultiModalEncoder}(x_{v_j}),\\
+  h_\text{type}(v_j) &= W_\text{type}[\varphi(v_j)],\\
+  h_\text{hop}(v_i,v_j) &= W_\text{hop}[p(v_i,v_j)],\\
+  h_\text{time}(v_i,v_j) &= W_\text{time}\,\text{PE}(\tau(v_j)-\tau(v_i)),\\
+  h_\text{pe}(v_j) &= \text{GNN}(A_\text{local},Z_\text{random})_j.
+\end{align}
+
+Sau đó:
+\[
+  h_\text{token}(v_j)=
+  O\,[h_\text{feat}\concat h_\text{type}\concat h_\text{hop}
+  \concat h_\text{time}\concat h_\text{pe}],
+\]
+với $O$ là ma trận trộn có thể học.
+
+\subsection{Encoder đặc trưng bảng}
+
+Đặc trưng bảng trong dữ liệu quan hệ thường đa phương thức: số, phân loại,
+multi-categorical, timestamp, text embedding. \RelGT{} dùng encoder theo kiểu
+dữ liệu, rồi đưa về cùng chiều $d$:
+\[
+  h_\text{feat}^{(t)}=\text{ResNet}^{(t)}
+  \bigl(\text{Enc}_\text{num},\text{Enc}_\text{cat},
+  \text{Enc}_\text{text},\text{Enc}_\text{time}\bigr).
+\]
+Điểm đáng chú ý là encoder được tách theo loại bảng $t$. Điều này phù hợp vì
+cùng một cột số trong bảng sản phẩm và bảng người dùng không nhất thiết có
+cùng phân phối hoặc cùng ý nghĩa.
+
+\subsection{Time encoder}
+
+\RelGT{} dùng positional encoding kiểu Transformer cho thời gian tương đối:
+\[
+  \text{PE}(\Delta\tau)_{2k}
+  =\sin\left(\frac{\Delta\tau}{10000^{2k/d}}\right),\quad
+  \text{PE}(\Delta\tau)_{2k+1}
+  =\cos\left(\frac{\Delta\tau}{10000^{2k/d}}\right).
+\]
+Sau đó:
+\[
+  h_\text{time}=W_\text{time}\text{PE}(\Delta\tau)+b_\text{time}.
+\]
+Với token không có thời gian hợp lệ, triển khai có thể dùng một mask vector
+có thể học để không ép giá trị thiếu thành một thời điểm giả.
+
+\subsection{GNN positional encoding}
+
+GNN-PE chạy một GNN nhẹ trên đồ thị con:
+\[
+  h_\text{pe}(v_j)=\text{GNN}(A_\text{local},Z_\text{random})_j.
+\]
+$Z_\text{random}$ được lấy ngẫu nhiên để phá đối xứng giữa các vị trí cấu trúc.
+Về trực giác, nếu hai node có feature giống nhau nhưng nằm ở vị trí cấu trúc
+khác nhau trong đồ thị con, GNN-PE tạo thêm tín hiệu giúp Transformer phân biệt.
+
+\begin{remark}
+GNN-PE là cầu nối giữa GNN và Transformer. Nó không dùng GNN làm bộ dự báo
+chính, nhưng dùng GNN để cung cấp tọa độ cấu trúc cục bộ cho token.
+\end{remark}
+
+\subsection{Local Transformer}
+
+Trên $K$ token của seed, \RelGT{} dùng self-attention:
+\[
+  \text{Attn}(Q,K,V)=
+  \text{softmax}\left(\frac{QK^\top}{\sqrt{d_k}}\right)V.
+\]
+Vì $K$ cố định, local attention có chi phí $\mathcal{O}(K^2d)$ cho mỗi seed.
+Sau các lớp Transformer, mô hình dùng readout để thu được biểu diễn cục bộ:
+\[
+  h_\text{local}(v_i)=
+  \sum_{j=1}^{K}\alpha_j h_j,\quad
+  \alpha_j=\frac{\exp(w^\top[h_i\concat h_j])}
+  {\sum_k\exp(w^\top[h_i\concat h_k])}.
+\]
+
+\subsection{Global centroid module}
+
+Local Transformer chỉ nhìn vào đồ thị con. Để có ngữ cảnh toàn cục, \RelGT{}
+duy trì một codebook gồm $B$ centroid. Seed representation truy vấn vào
+codebook:
+\[
+  h_\text{global}(v_i)=
+  \text{Attn}(q(v_i),K_\text{cb},V_\text{cb}).
+\]
+
+Mỗi node được gán vào centroid gần nhất:
+\[
+  c_{v_i}=\arg\min_{b\in[B]}\|q_{v_i}-e_b\|_2.
+\]
+Codebook có thể cập nhật bằng EMA:
+\begin{align}
+  N_b^{(t)} &=
+  \gamma N_b^{(t-1)}+(1-\gamma)\sum_i\mathbf{1}[c_{v_i}=b],\\
+  e_b^{(t)} &=
+  \frac{\gamma N_b^{(t-1)}e_b^{(t-1)}
+  +(1-\gamma)\sum_{i:c_{v_i}=b}q_{v_i}}{N_b^{(t)}}.
+\end{align}
+
+\subsection{Kết hợp local và global}
+
+Biểu diễn cuối cùng thường được lấy bằng:
+\[
+  h(v_i)=\text{MLP}\bigl([h_\text{local}(v_i)\concat h_\text{global}(v_i)]\bigr),
+\quad
+  \hat{y}_i=\text{Head}(h(v_i)).
+\]
+Tùy tác vụ, loss có thể là BCEWithLogits cho phân loại nhị phân/đa nhãn hoặc
+MAE/MSE cho hồi quy.
+
+\subsection{Độ phức tạp}
+
+\begin{table}[H]
+\centering
+\caption{Độ phức tạp chính trong \RelGT{}.}
+\begin{tabularx}{\textwidth}{lccX}
+\toprule
+\textbf{Thành phần} & \textbf{Time} & \textbf{Space} & \textbf{Ghi chú} \\
+\midrule
+Lấy mẫu & $\mathcal{O}(K)$ & $\mathcal{O}(K)$ & $K$ cố định theo cấu hình. \\
+Token hóa & $\mathcal{O}(Kd)$ & $\mathcal{O}(Kd)$ & Gồm feature/type/hop/time/PE. \\
+Local attention & $\mathcal{O}(K^2d)$ & $\mathcal{O}(K^2)$ & Chi phí cao nhất khi $K$ lớn. \\
+Global attention & $\mathcal{O}(BHd_h)$ & $\mathcal{O}(B d)$ & $B$ là số centroid. \\
+Head dự báo & $\mathcal{O}(d^2)$ & $\mathcal{O}(d)$ & Nhỏ so với attention/encoder. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{insightbox}[Điểm cân bằng]
+\RelGT{} chấp nhận chi phí $\mathcal{O}(K^2)$ trong local attention để đổi
+lấy tương tác all-pair giữa các token trong đồ thị con. Vì $K$ cố định, chi
+phí không tăng trực tiếp theo tổng số node toàn đồ thị.
+\end{insightbox}
+
+\subsection{Đánh giá trên RelBench}
+
+RelBench gồm nhiều cơ sở dữ liệu và 21 tác vụ, bao gồm phân loại nhị phân,
+hồi quy và phân loại đa nhãn. Các chỉ số thường dùng:
+\begin{itemize}
+  \item ROC-AUC cho phân loại nhị phân.
+  \item MAE cho hồi quy.
+  \item Macro AUPRC cho phân loại đa nhãn.
+\end{itemize}
+
+\begin{table}[H]
+\centering
+\small
+\caption{Kết quả thực nghiệm của \RelGT{} trên các tác vụ RelBench tiêu biểu.
+Bảng được tổng hợp từ paper gốc~\cite{relgt2025}. Với MAE, giá trị thấp hơn
+là tốt hơn; với AUC, giá trị cao hơn là tốt hơn.}
+\begin{subtable}[t]{0.49\textwidth}
+\centering
+\caption{MAE cho hồi quy thực thể.}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{llrrrrr}
+\toprule
+\textbf{Dataset} & \textbf{Task} & \textbf{RDL} & \textbf{HGT} &
+\textbf{HGT+PE} & \textbf{\RelGT{}} & \textbf{Gain(\%)} \\
+\midrule
+rel-f1 & driver-position & 4.022 & 4.2263 & 4.3921 & \textbf{3.9170} & 2.61 \\
+rel-avito & ad-ctr & 0.041 & 0.0462 & 0.0483 & \textbf{0.0345} & 15.85 \\
+rel-event & user-attendance & 0.258 & 0.2635 & 0.2611 & \textbf{0.2502} & 2.79 \\
+rel-trial & study-adverse & 44.473 & 45.1692 & \textbf{42.6484} & 43.9923 & 1.08 \\
+ & site-success & 0.400 & 0.4428 & 0.4396 & \textbf{0.3263} & 18.43 \\
+rel-amazon & user-ltv & 14.313 & 15.4120 & 15.8643 & \textbf{14.2665} & 0.32 \\
+ & item-ltv & 50.053 & 55.8683 & 55.8493 & \textbf{48.9222} & 2.26 \\
+rel-stack & post-votes & \textbf{0.065} & 0.0679 & 0.0680 & 0.0654 & \textcolor{darkred}{-0.62} \\
+rel-hm & item-sales & 0.056 & 0.0641 & 0.0639 & \textbf{0.0536} & 4.29 \\
+\bottomrule
+\end{tabular}}
+\end{subtable}
+\hfill
+\begin{subtable}[t]{0.49\textwidth}
+\centering
+\caption{AUC cho phân loại thực thể.}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{llrrrrr}
+\toprule
+\textbf{Dataset} & \textbf{Task} & \textbf{RDL} & \textbf{HGT} &
+\textbf{HGT+PE} & \textbf{\RelGT{}} & \textbf{Gain(\%)} \\
+\midrule
+rel-f1 & driver-dnf & 0.7262 & 0.7077 & 0.7117 & \textbf{0.7587} & 4.48 \\
+ & driver-top3 & 0.7554 & 0.7075 & 0.7627 & \textbf{0.8352} & 10.56 \\
+rel-avito & user-clicks & 0.6590 & 0.6376 & 0.6457 & \textbf{0.6830} & 3.64 \\
+ & user-visits & 0.6620 & 0.6432 & 0.6495 & \textbf{0.6678} & 0.88 \\
+rel-event & user-repeat & \textbf{0.7689} & 0.6496 & 0.6536 & 0.7609 & \textcolor{darkred}{-1.04} \\
+ & user-ignore & 0.8162 & \textbf{0.8247} & 0.8161 & 0.8157 & \textcolor{darkred}{-0.06} \\
+rel-trial & study-outcome & 0.6860 & 0.5837 & 0.5921 & \textbf{0.6861} & 0.01 \\
+rel-amazon & user-churn & \textbf{0.7042} & 0.6643 & 0.6619 & 0.7039 & \textcolor{darkred}{-0.04} \\
+ & item-churn & \textbf{0.8281} & 0.7797 & 0.7803 & 0.8255 & \textcolor{darkred}{-0.31} \\
+rel-stack & user-engagement & 0.9021 & 0.8847 & 0.8817 & \textbf{0.9053} & 0.35 \\
+ & user-badge & \textbf{0.8986} & 0.8608 & 0.8566 & 0.8632 & \textcolor{darkred}{-3.94} \\
+rel-hm & user-churn & \textbf{0.6988} & 0.6695 & 0.6569 & 0.6927 & \textcolor{darkred}{-0.87} \\
+\bottomrule
+\end{tabular}}
+\end{subtable}
+\end{table}
+
+Kết quả trong paper cho thấy \RelGT{} có lợi thế so với các baseline GNN và
+tabular trong nhiều tác vụ vì nó đồng thời khai thác feature bảng, schema,
+thời gian, cấu trúc cục bộ và ngữ cảnh toàn cục.
+
+% ============================================================
+\section{\RelGTpp{}: Phiên bản Cải tiến}
+% ============================================================
+
+\subsection{Mục tiêu thiết kế}
+
+\RelGTpp{} giữ pipeline của \RelGT{} nhưng thay nhiều khối bằng module mạnh
+hơn. Nếu \RelGT{} trả lời câu hỏi ``làm sao đưa Transformer vào dữ liệu quan
+hệ'', thì \RelGTpp{} trả lời câu hỏi thực dụng hơn: ``làm sao huấn luyện kiến
+trúc đó ổn định, giàu biểu đạt và phù hợp với code production hơn''.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  box/.style={draw,rounded corners=4pt,minimum width=2.08cm,minimum height=0.58cm,
+              align=center,font=\scriptsize},
+  inp/.style={box,fill=gray!12,draw=gray!50},
+  enc/.style={box,fill=blue!9,draw=mainblue},
+  mod/.style={box,fill=green!8,draw=deepgreen},
+  out/.style={box,fill=orange!10,draw=warnorange},
+  arr/.style={-Stealth,thick}
+]
+\node[inp] (types) at (0,2.0) {node types};
+\node[inp] (hops)  at (0,1.0) {hop ids};
+\node[inp] (times) at (0,0.0) {rel times};
+\node[inp] (feat)  at (0,-1.0) {table features};
+\node[inp] (edge)  at (0,-2.0) {subgraph edges};
+
+\node[enc] (et)  at (2.55,2.0) {TypeEncoder};
+\node[enc] (eh)  at (2.55,1.0) {HopEncoder};
+\node[enc] (eti) at (2.55,0.0) {TimeEncoder};
+\node[enc] (ef)  at (2.55,-1.0) {TfsEncoder};
+\node[enc] (ep)  at (2.55,-2.0) {GNNPEEncoder};
+
+\node[mod,minimum width=2.0cm]  (fusion) at (5.2,0) {CrossModal\\GatedFusion};
+\node[mod,minimum width=2.15cm] (local)  at (7.85,0.88) {LocalModule\\SwiGLU\\DropPath};
+\node[mod,minimum width=2.15cm] (global) at (7.85,-0.88) {GlobalModule\\Gumbel\\Codebook};
+\node[mod,minimum width=1.85cm] (bridge) at (10.35,0) {CrossAttention\\Bridge};
+\node[out,minimum width=1.35cm] (head) at (12.55,0) {MLP\\Head};
+
+\foreach \a/\b in {types/et,hops/eh,times/eti,feat/ef,edge/ep}
+  \draw[arr,gray!70] (\a) -- (\b);
+\foreach \a in {et,eh,eti,ef,ep}
+  \draw[arr,mainblue!70] (\a.east) -- ++(0.28,0) |- (fusion.west);
+\draw[arr] (fusion) -- (local);
+\draw[arr] (fusion) -- (global);
+\draw[arr] (local) -- (bridge);
+\draw[arr] (global) -- (bridge);
+\draw[arr] (bridge) -- (head);
+\end{tikzpicture}
+\caption{Luồng module chính trong \RelGTpp{}.}
+\end{figure}
+
+\subsection{CrossModalGatedFusion}
+
+Trong \RelGT{} gốc, năm embedding được nối rồi chiếu tuyến tính. \RelGTpp{}
+thay bằng cơ chế gate theo phương thức:
+\[
+  g_i=\sigma(W_\text{self}^{(i)}e_i+
+  W_\text{ctx}^{(i)}\text{ctx}_i),
+\quad
+  \text{ctx}_i=\frac{1}{M-1}\sum_{j\ne i}e_j.
+\]
+Biểu diễn hợp nhất:
+\[
+  h_\text{fused}=
+  \text{LN}\left(W_\text{out}
+  \sum_{i=1}^{M}g_i\odot W_\text{val}^{(i)}e_i\right).
+\]
+
+Ý nghĩa: mô hình không buộc feature, type, hop, time và PE có trọng số ngang
+nhau. Ví dụ trong tác vụ churn, time có thể quan trọng hơn; trong tác vụ dự
+báo sản phẩm, feature tabular và quan hệ có thể nổi bật hơn.
+
+\subsection{SwiGLU Feed-Forward Network}
+
+\RelGTpp{} thay FFN thông thường bằng SwiGLU:
+\[
+  \text{SwiGLU}(x)=
+  W_\text{down}\bigl(\text{SiLU}(W_\text{gate}x)\odot W_\text{up}x\bigr).
+\]
+SwiGLU thường cho gradient flow tốt hơn FFN GELU đơn giản vì nhánh gate cho
+phép mô hình điều tiết từng chiều ẩn theo input.
+
+\subsection{Stochastic Depth}
+
+DropPath bỏ qua một số residual branch trong huấn luyện:
+\[
+  \text{DropPath}(x;p)=
+  \begin{cases}
+    x/(1-p), & \text{với xác suất }1-p,\\
+    0, & \text{với xác suất }p.
+  \end{cases}
+\]
+Trong mạng sâu, cơ chế này giảm overfitting và giúp ensemble ngầm nhiều độ
+sâu khác nhau.
+
+\subsection{Multi-View Readout}
+
+Thay vì chỉ dùng attention pooling, \RelGTpp{} tổng hợp ba góc nhìn:
+\begin{align}
+  v_\text{attn} &= \sum_j\alpha_jh_j,\\
+  v_\text{mean} &= \frac{1}{K-1}\sum_jh_j,\\
+  v_\text{max} &= \max_jh_j.
+\end{align}
+Sau đó:
+\[
+  h_\text{local}=\text{LN}\bigl(h_i+
+  \text{MLP}([v_\text{attn}\concat v_\text{mean}\concat v_\text{max}])\bigr).
+\]
+Attention nắm quan hệ có chọn lọc, mean giữ bức tranh trung bình, max giữ
+tín hiệu nổi bật hiếm.
+
+\subsection{GumbelSoftCodebook}
+
+Codebook phẳng dễ gặp \emph{codebook collapse}: nhiều centroid không được dùng.
+\RelGTpp{} thêm Gumbel noise và soft assignment:
+\[
+  l_{i,b}=-\|q_i-e_b\|_2^2,\quad
+  s_{i,b}=\frac{\exp((l_{i,b}+g_{i,b})/\tau)}
+  {\sum_{b'}\exp((l_{i,b'}+g_{i,b'})/\tau)}.
+\]
+Trong đó:
+\[
+  g_{i,b}=-\log(-\log U_{i,b}),\quad U_{i,b}\sim\text{Uniform}(0,1).
+\]
+Nhiệt độ được anneal:
+\[
+  \tau^{(t+1)}=\max(\tau^{(t)}(1-r),\tau_\text{min}).
+\]
+
+Để đo mức sử dụng codebook, \RelGTpp{} dùng entropy chuẩn hóa:
+\[
+  \mathcal{L}_\text{entropy}
+  =1-\frac{-\sum_b p_b\log p_b}{\log B}.
+\]
+Loss bằng 0 khi phân phối centroid đều, tiến tới 1 khi collapse.
+
+\subsection{CrossAttentionBridge}
+
+\RelGT{} gốc nối $h_\text{local}$ và $h_\text{global}$. \RelGTpp{} dùng bridge
+hai chiều:
+\begin{align}
+  \alpha &= \sigma\left(
+  \frac{\langle W_q^lh_l,W_k^gh_g\rangle}{\sqrt{d}}\right),&
+  \tilde{h}_l &= h_l+\alpha W_v^g h_g,\\
+  \beta &= \sigma\left(
+  \frac{\langle W_q^gh_g,W_k^lh_l\rangle}{\sqrt{d}}\right),&
+  \tilde{h}_g &= h_g+\beta W_v^l h_l.
+\end{align}
+Sau đó:
+\[
+  \gamma=\sigma(W_\text{gate}[\tilde{h}_l\concat\tilde{h}_g]),\quad
+  h_\text{bridge}=\text{LN}\left(
+  W_\text{out}(\gamma\odot\tilde{h}_l+(1-\gamma)\odot\tilde{h}_g)+h_l
+  \right).
+\]
+
+\subsection{Kỹ thuật triển khai dữ liệu}
+
+Một điểm mạnh của \RelGTpp{} là pipeline dữ liệu theo HDF5:
+\begin{itemize}
+  \item lưu trước type, index, hop, relative time và edge index của từng đồ
+        thị con;
+  \item DataLoader đọc theo batch và scatter feature về shape $[B,K,d]$;
+  \item encoder bảng chạy theo nhóm node type để giảm số lần forward.
+\end{itemize}
+
+Nếu mã hóa từng token riêng lẻ, batch $B=512$, $K=300$ dẫn đến 153.600 lần
+encode. Group-by-type giảm xuống khoảng số loại bảng, thường chỉ vài lần
+forward lớn.
+
+\subsection{Các vấn đề kỹ thuật cần chú ý}
+
+\begin{warnbox}[Rủi ro triển khai]
+\begin{enumerate}
+  \item \textbf{Auxiliary loss có thể chưa được cộng vào training loss}: nếu
+        entropy/agreement chỉ được ghi log mà không được cộng vào loss, chúng
+        không ảnh hưởng đến gradient.
+  \item \textbf{Agreement loss dùng \texttt{no\_grad}}: nếu cosine similarity
+        được tính trong vùng không gradient, nó không thể kéo local và global
+        lại gần nhau.
+  \item \textbf{c\_idx trong DDP}: bộ nhớ gán centroid theo node cần đồng bộ
+        giữa các GPU, nếu không mỗi rank có thống kê centroid riêng.
+  \item \textbf{GNN-PE stochastic}: tăng expressiveness nhưng có thể tạo variance
+        trong inference nếu không kiểm soát seed hoặc averaging.
+\end{enumerate}
+\end{warnbox}
+
+% ============================================================
+\section{\RelGTx{}: Hướng Mở rộng Nghiên cứu}
+% ============================================================
+
+\subsection{Động lực}
+
+\RelGT{} và \RelGTpp{} đã mạnh, nhưng vẫn còn các hạn chế:
+\begin{itemize}
+  \item Local attention vẫn all-pair, chưa tận dụng schema để biết cặp token
+        nào đáng chú ý.
+  \item Time encoder học tương quan thời gian nhưng chưa tách tín hiệu nguyên
+        nhân và tương quan giả.
+  \item Codebook còn phẳng, chưa phản ánh phân cấp database--table--cluster.
+  \item Hop encoder không phân biệt các đường quan hệ khác nhau có cùng độ dài.
+  \item Tokenization chưa thích nghi theo tác vụ.
+  \item Biểu diễn chưa được khuyến khích bất biến qua các biến đổi schema.
+\end{itemize}
+
+\RelGTx{} được đề xuất như một kiến trúc kế tiếp với sáu module.
+
+\subsection{Schema-Guided Sparse Attention}
+
+Với schema $\mathcal{S}=(\mathcal{T},\mathcal{R})$, định nghĩa ma trận reachability:
+\[
+  M_{ab}^{(r)}=
+  \mathbf{1}\bigl[\text{tồn tại đường đi schema độ dài }\le r
+  \text{ từ loại }a\text{ đến loại }b\bigr].
+\]
+Với token $i,j$ có loại $\phi_i,\phi_j$, attention bias:
+\[
+  b_{ij}=
+  \begin{cases}
+    0,& M_{\phi_i,\phi_j}^{(r)}=1,\\
+    -\infty,& M_{\phi_i,\phi_j}^{(r)}=0.
+  \end{cases}
+\]
+Sparse attention:
+\[
+  \text{SGSA}(Q,K,V)=
+  \text{softmax}\left(\frac{QK^\top}{\sqrt{d_k}}+B+E_\text{rel}\right)V.
+\]
+Nếu $\rho$ là tỉ lệ cặp token hợp lệ theo schema, chi phí giảm từ
+$\mathcal{O}(K^2d)$ xuống $\mathcal{O}(\rho K^2d)$.
+
+\subsection{Causal Temporal Disentanglement}
+
+CTD tách biểu diễn thành thành phần nguyên nhân và tương quan giả:
+\[
+  h(v)=f_c(z_c(v))+f_s(z_s(v)).
+\]
+Loss gồm dự báo, bất biến qua môi trường thời gian và độc lập giữa hai phần:
+\[
+  \mathcal{L}_\text{CTD}=
+  \mathcal{L}_\text{pred}
+  +\lambda_1\sum_{e\ne e'}
+  \left\|\mathbb{E}_{v\in\mathcal{E}_e}z_c(v)
+  -\mathbb{E}_{v\in\mathcal{E}_{e'}}z_c(v)\right\|_2^2
+  +\lambda_2\|\text{Cov}(z_c,z_s)\|_F^2.
+\]
+Mục tiêu là làm biểu diễn causal ổn định hơn khi phân phối thời gian thay đổi.
+
+\subsection{Hierarchical Codebook với Schema Priors}
+
+Thay vì codebook phẳng $B$ centroid, HCS dùng ba tầng:
+\[
+  \text{database}\rightarrow \text{table type}
+  \rightarrow \text{intra-table cluster}
+  \rightarrow \text{fine centroid}.
+\]
+Gán tầng 1 là loại bảng:
+\[
+  c_v^{(1)}=\varphi(v).
+\]
+Tầng 2:
+\[
+  c_v^{(2)}=\arg\min_{b\in\mathcal{B}_{c_v^{(1)}}^{(2)}}
+  \|\text{proj}^{(2)}(q_v)-e_b^{(2)}\|_2.
+\]
+Tầng 3:
+\[
+  c_v^{(3)}=\arg\min_{b\in\mathcal{B}_{c_v^{(2)}}^{(3)}}
+  \|\text{proj}^{(3)}(q_v)-e_b^{(3)}\|_2.
+\]
+
+Schema prior có thể thêm separation loss:
+\[
+  \mathcal{L}_\text{sep}=
+  \sum_{t\ne t'}\sum_{b\in\mathcal{B}_t}\sum_{b'\in\mathcal{B}_{t'}}
+  \max(0,m-\|e_b-e_{b'}\|_2).
+\]
+
+\subsection{Relational Positional Encoding}
+
+Hop encoder chỉ biết độ dài đường đi, không biết đường đi đó đi qua quan hệ
+nào. RPE mã hóa chuỗi quan hệ:
+\[
+  \pi(v_i,v_j)=(r_1,r_2,\ldots,r_k).
+\]
+Mỗi quan hệ có embedding $e_{r_l}$, rồi dùng path encoder:
+\[
+  h_\pi(v_i,v_j)=
+  \text{Transformer}_\text{path}(e_{r_1},\ldots,e_{r_k})_{\text{CLS}}.
+\]
+Attention được cộng bias:
+\[
+  \text{Attn-RPE}_{ij}=\text{Attn}_{ij}+W_\text{rpe}h_\pi(v_i,v_j).
+\]
+
+\begin{proposition}
+RPE biểu đạt mạnh hơn hop encoder vì nó có thể phân biệt hai đường đi cùng
+độ dài nhưng khác thứ tự hoặc khác loại quan hệ, ví dụ
+$(\text{customer}\rightarrow\text{order}\rightarrow\text{product})$ và
+$(\text{product}\rightarrow\text{review}\rightarrow\text{customer})$.
+\end{proposition}
+
+\subsection{Meta-Learning Tokenization}
+
+Các tác vụ trong RelBench có nhu cầu khác nhau: task churn cần thời gian,
+task sales cần feature sản phẩm, task tương tác cần cấu trúc. MLT sinh bộ
+điều biến theo task:
+\[
+  h_\text{token}^{(\tau)}=
+  O\left(g_\tau\odot
+  [h_\text{feat}\concat h_\text{type}\concat h_\text{hop}
+  \concat h_\text{time}\concat h_\text{pe}]\right),
+\]
+\[
+  g_\tau=\sigma(\text{MLP}_\text{task}(c_\tau)),
+\]
+trong đó $c_\tau$ mô tả loại tác vụ, số lớp, phân phối nhãn hoặc thống kê
+schema liên quan.
+
+\subsection{Contrastive Schema Alignment}
+
+CSA tạo hai view schema-preserving của cùng node, ví dụ column dropout, table
+rename, relation permutation hoặc subgraph masking. Loss InfoNCE:
+\[
+  \mathcal{L}_\text{CSA}=
+  -\frac{1}{N}\sum_{i=1}^{N}
+  \log
+  \frac{\exp(\text{sim}(h_i^{(1)},h_i^{(2)})/\tau_c)}
+  {\sum_j\exp(\text{sim}(h_i^{(1)},h_j^{(2)})/\tau_c)}.
+\]
+Mục tiêu là biểu diễn cùng một thực thể vẫn gần nhau dù schema/view thay đổi.
+
+\subsection{Loss tổng thể của \RelGTx{}}
+
+\[
+  \boxed{
+  \mathcal{L}_\text{total}=
+  \mathcal{L}_\text{task}
+  +\lambda_\text{CTD}\mathcal{L}_\text{CTD}
+  +\lambda_\text{HCS}\mathcal{L}_\text{sep}
+  +\lambda_\text{CSA}\mathcal{L}_\text{CSA}
+  +\lambda_\text{entropy}\mathcal{L}_\text{entropy}
+  +\lambda_\text{agree}\mathcal{L}_\text{local-global}
+  }.
+\]
+
+% ============================================================
+\section{So sánh Ba Thế hệ}
+% ============================================================
+
+\begin{longtable}{p{3.2cm}p{3.7cm}p{3.7cm}p{3.7cm}}
+\caption{So sánh \RelGT{}, \RelGTpp{} và \RelGTx{}.}\\
+\toprule
+\textbf{Khía cạnh} & \textbf{\RelGT{}} & \textbf{\RelGTpp{}} & \textbf{\RelGTx{}} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Khía cạnh} & \textbf{\RelGT{}} & \textbf{\RelGTpp{}} & \textbf{\RelGTx{}} \\
+\midrule
+\endhead
+Token fusion &
+Concat 5 thành phần rồi linear projection. &
+CrossModalGatedFusion, gate từng phương thức theo ngữ cảnh. &
+Task modulator/meta-learning điều chỉnh trọng số token theo tác vụ. \\
+\midrule
+Local attention &
+All-pair attention trên $K$ token. &
+All-pair attention với SwiGLU, DropPath, Multi-View Readout. &
+Schema-Guided Sparse Attention, giảm nhiễu và FLOPs. \\
+\midrule
+Temporal modeling &
+Relative time encoder bằng sinusoidal PE. &
+Time encoder được gate cùng các modality khác. &
+CTD tách causal và spurious temporal signal. \\
+\midrule
+Positional encoding &
+Hop encoder + GNN-PE stochastic. &
+GNN-PE cải tiến bằng GIN/residual. &
+RPE mã hóa đường đi quan hệ, phân biệt loại quan hệ. \\
+\midrule
+Global memory &
+Flat centroid/codebook. &
+GumbelSoftCodebook, entropy tracking, temperature annealing. &
+Hierarchical codebook theo schema/table/cluster. \\
+\midrule
+Local-global fusion &
+Concat + MLP. &
+CrossAttentionBridge hai chiều. &
+Bridge nâng cao kết hợp causal và hierarchical global context. \\
+\midrule
+Regularization &
+Dropout/weight decay cơ bản. &
+DropPath, entropy, agreement loss nếu được kích hoạt. &
+CSA, CTD, HCS separation, entropy schedule. \\
+\midrule
+Transfer giữa task &
+Không phải trọng tâm. &
+Không phải trọng tâm. &
+Meta-learning tokenization và schema alignment. \\
+\midrule
+Độ phức tạp local &
+$\mathcal{O}(K^2d)$. &
+$\mathcal{O}(K^2d)$, nhưng module ổn định hơn. &
+$\mathcal{O}(\rho K^2d)$ với $\rho<1$. \\
+\bottomrule
+\end{longtable}
+
+\subsection{Bảng điểm mạnh và điểm yếu}
+
+\begin{table}[H]
+\centering\small
+\caption{Đánh giá tổng hợp.}
+\begin{tabularx}{\textwidth}{lXX}
+\toprule
+\textbf{Phiên bản} & \textbf{Điểm mạnh} & \textbf{Điểm yếu / rủi ro} \\
+\midrule
+\RelGT{} &
+Thiết kế rõ ràng, token hóa giàu ngữ cảnh, kết hợp local-global, phù hợp
+dữ liệu quan hệ có thời gian. &
+Fusion còn tuyến tính; attention chưa biết schema; codebook phẳng; GNN-PE
+có variance. \\
+\RelGTpp{} &
+Mạnh hơn về kỹ thuật huấn luyện; gate đa phương thức; SwiGLU; codebook mềm;
+readout nhiều góc nhìn. &
+Auxiliary loss cần kiểm tra; DDP/codebook sync có thể phức tạp; số tham số
+và pipeline tăng. \\
+\RelGTx{} &
+Đưa prior schema, causal temporal, hierarchical memory và transfer learning
+vào kiến trúc. &
+Nhiều module mới làm tăng độ khó ablation; CTD/CSA cần thiết kế dữ liệu và
+schedule cẩn thận. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+% ============================================================
+\section{Kế hoạch Thực nghiệm Đề xuất}
+% ============================================================
+
+\subsection{Ablation theo tầng kiến trúc}
+
+\begin{table}[H]
+\centering
+\caption{Ablation cho ba thế hệ.}
+\begin{tabularx}{\textwidth}{clX}
+\toprule
+\textbf{\#} & \textbf{Cấu hình} & \textbf{Câu hỏi kiểm tra} \\
+\midrule
+1 & GNN/LightGBM baseline & RELGT có thật sự vượt mô hình tabular/GNN không? \\
+2 & \RelGT{} full & Token hóa 5 phần + local-global giúp bao nhiêu? \\
+3 & \RelGT{} bỏ global & Global centroid đóng góp bao nhiêu? \\
+4 & \RelGT{} bỏ GNN-PE/time/hop & Thành phần token nào quan trọng nhất theo task? \\
+5 & \RelGTpp{} full & Các cải tiến engineering có tăng ổn định/hiệu suất không? \\
+6 & \RelGTpp{} bỏ Gumbel/Bridge/Fusion & Từng module mới đóng góp bao nhiêu? \\
+7 & \RelGTx{} thêm SGSA & Schema mask giảm nhiễu và FLOPs thế nào? \\
+8 & \RelGTx{} thêm RPE/CTD/HCS/MLT/CSA & Kiểm tra lần lượt biểu đạt quan hệ, nhân quả, memory và transfer. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Chỉ số cần báo cáo}
+
+Ngoài metric chính của task, nên báo cáo thêm:
+\begin{itemize}
+  \item \textbf{Codebook utilization}: entropy, số centroid được dùng, histogram
+        gán centroid.
+  \item \textbf{Attention sparsity}: tỉ lệ $\rho$, FLOPs thực tế, memory peak.
+  \item \textbf{Temporal robustness}: hiệu suất theo split thời gian, đặc biệt
+        khi test nằm xa train.
+  \item \textbf{Variance}: mean/std qua nhiều seed, nhất là với GNN-PE stochastic.
+  \item \textbf{Ablation theo schema}: hiệu suất khi đổi hoặc mask một phần schema.
+\end{itemize}
+
+\subsection{Cấu hình tham khảo}
+
+\begin{table}[H]
+\centering
+\caption{Siêu tham số tham khảo.}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Tham số} & \textbf{Giá trị smoke/test} & \textbf{Giá trị đầy đủ} \\
+\midrule
+$K$ token/seed & 64--128 & 300 \\
+Embedding dim $d$ & 64--128 & 512 \\
+Centroid $B$ & 256--512 & 4096 \\
+Attention heads & 4 & 4--8 \\
+Transformer layers & 1 & 1--3 \\
+Learning rate & $10^{-4}$ & $10^{-4}$ \\
+Weight decay & $10^{-5}$ & $10^{-5}$ \\
+Dropout & 0.1 & 0.1 \\
+Gradient clipping & 1.0 & 1.0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ============================================================
+\section{Thảo luận}
+% ============================================================
+
+\subsection{Ý nghĩa khoa học}
+
+\RelGT{} cho thấy Graph Transformer có thể dùng hiệu quả trên dữ liệu quan hệ
+nếu bài toán tokenization được thiết kế đúng. Đóng góp không nằm ở việc áp
+dụng Transformer một cách trực tiếp, mà ở cách biến node trong cơ sở dữ liệu
+quan hệ thành token có đủ năm lớp thông tin: nội dung, kiểu, khoảng cách,
+thời gian và vị trí.
+
+\RelGTpp{} nhấn mạnh một điểm khác: với kiến trúc phức tạp, hiệu quả thực tế
+phụ thuộc nhiều vào các chi tiết kỹ thuật như fusion, readout, codebook update,
+loss phụ và pipeline dữ liệu. Một ý tưởng tốt có thể yếu nếu triển khai không
+ổn định; ngược lại, một loạt cải tiến nhỏ nhưng đúng chỗ có thể làm mô hình
+dễ train hơn đáng kể.
+
+\RelGTx{} mở rộng từ ``học trên graph quan hệ'' sang ``học có prior về schema
+và thời gian''. Đây là bước tự nhiên vì cơ sở dữ liệu quan hệ không chỉ là
+graph, mà là graph được sinh ra bởi schema có ý nghĩa.
+
+\subsection{Giới hạn}
+
+Các hướng mở rộng trong \RelGTx{} cần được kiểm chứng cẩn thận. SGSA phụ thuộc
+vào chất lượng schema mask; CTD cần định nghĩa môi trường thời gian hợp lý;
+HCS cần tránh phân mảnh codebook; CSA cần augmentation không phá ngữ nghĩa.
+Do đó, \RelGTx{} nên được phát triển theo từng module và luôn có ablation.
+
+\subsection{Kết luận}
+
+\RelGT{} là một bước tiến quan trọng cho Relational Deep Learning vì nó đưa
+Transformer vào dữ liệu quan hệ bằng một thiết kế token hóa phù hợp. \RelGTpp{}
+củng cố kiến trúc đó bằng các cải tiến thực dụng về fusion, readout, codebook
+và huấn luyện. \RelGTx{} là định hướng nghiên cứu tiếp theo, khai thác sâu
+hơn schema, nhân quả thời gian và khả năng transfer giữa tác vụ.
+
+Thông điệp chính của toàn bộ chuỗi này là: để học tốt trên cơ sở dữ liệu quan
+hệ, mô hình cần hiểu đồng thời \textbf{bảng nào}, \textbf{quan hệ nào},
+\textbf{khi nào}, \textbf{ở đâu trong đồ thị con}, và \textbf{ngữ cảnh toàn
+cục nào} đang ảnh hưởng đến dự báo.
+
+% ============================================================
+\begin{thebibliography}{99}
+
+\bibitem{relgt2025}
+Dwivedi, V. P., Jaladi, S., Shen, Y., López, F., Kanatsoulis, C. I.,
+Puri, R., Fey, M., \& Leskovec, J. (2025).
+\textit{Relational Graph Transformer}.
+arXiv:2505.10960.
+
+\bibitem{relbench2023}
+Robinson, J. et al. (2023).
+\textit{RelBench: A Benchmark for Deep Learning on Relational Databases}.
+NeurIPS.
+
+\bibitem{attention2017}
+Vaswani, A. et al. (2017).
+\textit{Attention Is All You Need}.
+NeurIPS.
+
+\bibitem{graphsage2017}
+Hamilton, W., Ying, Z., \& Leskovec, J. (2017).
+\textit{Inductive Representation Learning on Large Graphs}.
+NeurIPS.
+
+\bibitem{hgt2020}
+Hu, Z. et al. (2020).
+\textit{Heterogeneous Graph Transformer}.
+WWW.
+
+\bibitem{graphgps2022}
+Rampášek, L. et al. (2022).
+\textit{Recipe for a General, Powerful, Scalable Graph Transformer}.
+NeurIPS.
+
+\bibitem{gin2019}
+Xu, K. et al. (2019).
+\textit{How Powerful are Graph Neural Networks?}
+ICLR.
+
+\bibitem{gumbel2017}
+Jang, E., Gu, S., \& Poole, B. (2017).
+\textit{Categorical Reparameterization with Gumbel-Softmax}.
+ICLR.
+
+\bibitem{maml2017}
+Finn, C., Abbeel, P., \& Levine, S. (2017).
+\textit{Model-Agnostic Meta-Learning for Fast Adaptation of Deep Networks}.
+ICML.
+
+\bibitem{simclr2020}
+Chen, T. et al. (2020).
+\textit{A Simple Framework for Contrastive Learning of Visual Representations}.
+ICML.
+
+\bibitem{causalrep2021}
+Schölkopf, B. et al. (2021).
+\textit{Toward Causal Representation Learning}.
+Proceedings of the IEEE.
+
+\end{thebibliography}
+
+\end{document}
