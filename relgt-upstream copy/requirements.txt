@@ -1,0 +1,25 @@
+# Core
+torch>=2.1.0
+torchvision
+torchaudio
+
+# Graph & relational
+torch-geometric
+torch-frame[full]
+relbench
+
+# Utilities
+einops
+wandb
+tqdm
+numpy
+pandas
+h5py
+scikit-network
+ogb
+sentence-transformers
+pynvml
+
+# Optional (faster installs)
+# uv pip install pyg-lib torch-scatter torch-sparse torch-cluster torch-spline-conv \
+#     -f https://data.pyg.org/whl/torch-2.5.0+cu121.html
